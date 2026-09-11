@@ -5,18 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Swiss & Paris Journey 2026</title>
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vue 3 CDN -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- SortableJS (for Drag & Drop) -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- 1. CDN 預先連線與 DNS 加速解析 -->
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="dns-prefetch" href="https://open.er-api.com">
+
+  <!-- 2. Google Fonts (加入 display=swap 避免字型載入白屏) -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- 3. Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- 4. Vue 3 + Lucide + SortableJS -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -58,12 +65,14 @@
 
   <div id="app" class="w-full max-w-[480px] min-h-screen bg-nordic-bg shadow-2xl relative pb-28 flex flex-col">
 
-    <!-- 頂部 Hero 圖片與浮動 Tab Bar -->
+    <!-- 頂部 Hero 圖片 (WebP 高效壓縮 + 背景色打底) -->
     <header class="relative h-56 w-full overflow-hidden bg-zurich-800 flex-shrink-0">
       <img 
-        src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=1000&q=80" 
+        src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=600&q=65&fm=webp" 
         alt="Zurich & Alps" 
         class="w-full h-full object-cover opacity-75"
+        decoding="async"
+        loading="eager"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-zurich-800/90 via-zurich-800/30 to-transparent"></div>
       
@@ -429,7 +438,7 @@
       </section>
 
 
-      <!-- ================= 4. 花費記帳 (幣別已修改為台幣 TWD) ================= -->
+      <!-- ================= 4. 花費記帳 (幣別新台幣 TWD) ================= -->
       <section v-show="currentTab === 'expenses'" class="space-y-4">
         <!-- 總花費統計大卡片 -->
         <div class="bg-gradient-to-br from-zurich-800 to-zurich-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
@@ -587,7 +596,7 @@
     </div>
 
 
-    <!-- 彈出視窗 3：新增花費 Modal (幣別修改為新台幣) -->
+    <!-- 彈出視窗 3：新增花費 Modal -->
     <div v-if="showExpenseModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
@@ -1136,7 +1145,7 @@
         const itineraryDays = ref(JSON.parse(localStorage.getItem('my_itinerary')) || defaultItinerary);
         const shoppingList = ref(JSON.parse(localStorage.getItem('my_shopping')) || []);
         
-        // 花費陣列預設值（單位改為新台幣 TWD）
+        // 預設花費（新台幣）
         const expenses = ref(JSON.parse(localStorage.getItem('my_expenses')) || [
           { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
@@ -1163,7 +1172,7 @@
         const exchangeCurrency = ref('CHF');
         const inputForeignAmount = ref(100);
         const isRateLoading = ref(false);
-        const lastUpdatedTime = ref(localStorage.getItem('rates_last_updated') || '尚未連網');
+        const lastUpdatedTime = ref(localStorage.getItem('rates_last_updated') || '載入中');
 
         const currentRates = ref(JSON.parse(localStorage.getItem('cached_rates')) || {
           CHF: 37.8,
@@ -1176,6 +1185,7 @@
           return Math.round((inputForeignAmount.value || 0) * rate);
         });
 
+        // 抓取匯率（非同步呼叫）
         const fetchLiveRates = async () => {
           isRateLoading.value = true;
           try {
@@ -1215,7 +1225,7 @@
           { name: 'Hôtel Vernet Champs Elysées Paris', dates: '9/21~9/24 (3夜)', address: '25 Rue Vernet, 75008 Paris, France', phone: '+33 1 44 31 98 00' },
         ];
 
-        // 總花費計算（新台幣 TWD）
+        // 總支出金額（新台幣）
         const totalExpenseTWD = computed(() => {
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
@@ -1245,7 +1255,6 @@
         const showShoppingModal = ref(false);
         const shoppingForm = ref({ name: '', image: null, notes: '', bought: false });
 
-        // 記帳 Form（預設金額以新台幣輸入）
         const showExpenseModal = ref(false);
         const expenseForm = ref({
           category: '飲食',
@@ -1409,7 +1418,11 @@
         onMounted(() => {
           refreshIcons();
           initSortable();
-          fetchLiveRates();
+          
+          // 效能優化：延遲 250ms 背景執行匯率抓取，優先釋放主執行緒繪製首屏
+          setTimeout(() => {
+            fetchLiveRates();
+          }, 250);
         });
 
         return {
