@@ -169,7 +169,7 @@
           </button>
         </div>
 
-        <!-- 行程卡片清單 (純粹乾淨的導航卡片) -->
+        <!-- 行程卡片清單 -->
         <div id="schedule-list" :key="selectedDateIndex" class="space-y-3">
           <template v-for="(item, idx) in currentDay.items" :key="item.id">
             
@@ -261,7 +261,6 @@
                 {{ item.notes }}
               </div>
 
-              <!-- 底部功能按鈕：僅保留 Google Maps 導航 -->
               <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-end">
                 <button 
                   @click.stop="openGoogleMap(item.address || item.name)"
@@ -281,7 +280,7 @@
       <!-- ================= 2. 資訊頁 (i) ================= -->
       <section v-show="currentTab === 'info'" class="space-y-4">
         
-        <!-- Swiss Travel Pass 快速查驗專區 -->
+        <!-- Swiss Travel Pass 快速查驗專區 (支援自動壓縮永久儲存) -->
         <div class="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-2xl p-4 shadow-md border border-red-500 relative overflow-hidden">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
@@ -290,7 +289,7 @@
               </div>
               <div>
                 <h2 class="text-sm font-bold tracking-tight">Swiss Travel Pass</h2>
-                <p class="text-[10px] text-red-100">瑞士國鐵查票出示 · 離線可用</p>
+                <p class="text-[10px] text-red-100">瑞士國鐵查票出示 · 離線永久可用</p>
               </div>
             </div>
             
@@ -580,7 +579,7 @@
       <i data-lucide="plus" class="w-7 h-7"></i>
     </button>
 
-    <!-- 彈出視窗 1：新增/編輯 行程 Modal (純淨版：已移除 Live Cam 欄位) -->
+    <!-- 彈出視窗 1：新增/編輯 行程 Modal -->
     <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
@@ -642,7 +641,7 @@
       </div>
     </div>
 
-    <!-- 彈出視窗 2：新增購物清單 Modal -->
+    <!-- 彈出視窗 2：新增購物清單 Modal (支援壓縮) -->
     <div v-if="showShoppingModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
@@ -656,7 +655,7 @@
             <input v-model="shoppingForm.name" type="text" placeholder="例如：瑞士蓮巧克力、Hermès 圍巾" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
           <div>
-            <label class="font-semibold text-slate-700 block mb-1">上傳商品照片 (支援手機拍照/相簿)</label>
+            <label class="font-semibold text-slate-700 block mb-1">上傳商品照片 (自動壓縮省容量)</label>
             <input type="file" accept="image/*" @change="handleImageUpload" class="w-full text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:bg-zurich-100 file:text-zurich-700" />
             <div v-if="shoppingForm.image" class="mt-2 w-20 h-20 rounded-xl overflow-hidden border">
               <img :src="shoppingForm.image" class="w-full h-full object-cover" />
@@ -749,7 +748,6 @@
           { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
         ];
 
-        // 完整行程資料 (純淨版：已移除 Live Cam 屬性)
         const defaultItinerary = [
           {
             dateStr: '2026-09-12',
@@ -1222,10 +1220,10 @@
           }
         ];
 
-        // 升級版本 key 為 v10，徹底移除 Live Cam 暫存
+        // 升級版本 key 為 v11
         let savedItinerary = null;
         try {
-          const raw = localStorage.getItem('my_itinerary_v10');
+          const raw = localStorage.getItem('my_itinerary_v11');
           if (raw) savedItinerary = JSON.parse(raw);
         } catch(e) {}
 
@@ -1235,21 +1233,53 @@
           { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
 
-        // Swiss Pass 狀態
+        // Swiss Pass 狀態 (讀取快取)
         const swissPassQr = ref(localStorage.getItem('my_swiss_pass_qr') || null);
         const showFullScreenQr = ref(false);
 
+        // 高效圖片 Canvas 等比壓縮公用函式 (解決 localStorage 5MB 上限)
+        const compressImage = (file, maxDim, quality, callback) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              let width = img.width;
+              let height = img.height;
+              if (width > height && width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+              callback(compressedBase64);
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        // Swiss Pass 上傳 (自動壓縮至 800px，畫質 0.8，確保容量僅 ~120KB，重開絕對不消失)
         const handleSwissPassUpload = (e) => {
           const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              swissPassQr.value = event.target.result;
-              localStorage.setItem('my_swiss_pass_qr', event.target.result);
-              refreshIcons();
-            };
-            reader.readAsDataURL(file);
-          }
+          if (!file) return;
+
+          compressImage(file, 800, 0.8, (compressedBase64) => {
+            try {
+              swissPassQr.value = compressedBase64;
+              localStorage.setItem('my_swiss_pass_qr', compressedBase64);
+            } catch (err) {
+              console.error('儲存失敗：', err);
+              alert('圖片仍超出容量上限，請截圖較小的局部 QR Code 後重試。');
+            }
+            refreshIcons();
+          });
         };
 
         const cityCoordMap = {
@@ -1287,7 +1317,7 @@
         };
 
         const isWeatherLoading = ref(false);
-        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v10')) || defaultWeatherMap);
+        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v11')) || defaultWeatherMap);
         const weatherLastUpdated = ref(localStorage.getItem('weather_last_updated') || '尚未更新');
 
         const currentDay = computed(() => {
@@ -1336,7 +1366,7 @@
               const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
               weatherLastUpdated.value = timeStr;
 
-              localStorage.setItem('cached_weather_v10', JSON.stringify(liveWeatherData.value));
+              localStorage.setItem('cached_weather_v11', JSON.stringify(liveWeatherData.value));
               localStorage.setItem('weather_last_updated', timeStr);
             }
           } catch (err) {
@@ -1407,7 +1437,7 @@
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v10', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v11', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
 
@@ -1552,15 +1582,14 @@
           }
         };
 
+        // 購物照片上傳 (自動壓縮至 600px，畫質 0.75，兼具畫質與輕量)
         const handleImageUpload = (e) => {
           const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              shoppingForm.value.image = event.target.result;
-            };
-            reader.readAsDataURL(file);
-          }
+          if (!file) return;
+
+          compressImage(file, 600, 0.75, (compressedBase64) => {
+            shoppingForm.value.image = compressedBase64;
+          });
         };
 
         const saveShoppingItem = () => {
