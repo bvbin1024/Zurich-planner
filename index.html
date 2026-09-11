@@ -161,7 +161,7 @@
               <div class="h-px bg-slate-200 flex-1"></div>
             </div>
 
-            <!-- 航班專用卡片 -->
+            <!-- 航班專用卡片 (TPE ➔ CDG) -->
             <div 
               v-if="item.category === '航班'" 
               class="bg-gradient-to-br from-zurich-700 to-zurich-800 text-white rounded-2xl p-4 shadow-md relative cursor-grab active:cursor-grabbing border border-zurich-600"
@@ -187,7 +187,7 @@
                 </div>
                 <div class="text-right">
                   <div class="text-2xl font-extrabold">{{ item.arrAirport || 'CDG' }}</div>
-                  <div class="text-xs text-zurich-200">{{ item.arrTime || '--:--' }}</div>
+                  <div class="text-xs text-zurich-200">{{ item.arrTime || '07:35 (+1)' }}</div>
                 </div>
               </div>
               <div class="text-xs text-zurich-100/90 pt-1 border-t border-white/10 flex justify-between items-center">
@@ -303,7 +303,7 @@
           </div>
         </div>
 
-        <!-- 航班資訊 (已更正 TPE 到 CDG) -->
+        <!-- 航班資訊 (去程已更正為 TPE ➔ CDG) -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center gap-2 mb-3">
             <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
@@ -661,7 +661,7 @@
           { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
         ];
 
-        // 行程資料：已修正 9/12 為 TPE ➔ CDG
+        // 9/12 已正式修正為 TPE ➔ CDG
         const defaultItinerary = [
           {
             dateStr: '2026-09-12',
@@ -681,7 +681,7 @@
                 arrAirport: 'CDG',
                 arrTime: '07:35 (+1)',
                 duration: '14h 05m',
-                notes: '啟程飛往巴黎戴高樂。請提前 3 小時抵達桃園機場辦理報到手續與托運行李。'
+                notes: '啟程飛往巴黎戴高樂。請提前 3 小時抵達桃園機場辦理登機手續與托運行李。'
               }
             ]
           },
@@ -1134,10 +1134,10 @@
           }
         ];
 
-        // 升級版本 key 為 v4，自動覆蓋載入修正後的 TPE ➔ CDG
+        // 升級版本 key 為 v5，強制淘汰載入手機舊快取
         let savedItinerary = null;
         try {
-          const raw = localStorage.getItem('my_itinerary_v4');
+          const raw = localStorage.getItem('my_itinerary_v5');
           if (raw) savedItinerary = JSON.parse(raw);
         } catch(e) {}
 
@@ -1148,7 +1148,7 @@
         ]);
 
         const weatherCityMap = {
-          '台北 ➔ 巴黎': { icon: 'cloud-sun', summary: '出發飛行 · 舒適', temp: 28, feelsLike: 29 },
+          '台北 ➔ 巴黎': { icon: 'cloud-sun', summary: '出發啟程 · 舒適', temp: 28, feelsLike: 29 },
           '蘇黎世': { icon: 'cloud-sun', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
           '琉森 / 瑞吉山': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
           '伯恩 ➔ 茵特拉肯': { icon: 'cloud-sun', summary: '多雲偶見陽光', temp: 18, feelsLike: 17 },
@@ -1213,7 +1213,7 @@
           }
         };
 
-        // 資訊頁航班明細：已修正去程為 TPE ➔ CDG
+        // 資訊頁航班明細：去程修正為 TPE ➔ CDG
         const flightDetails = [
           { type: '去程 (台北➔巴黎)', code: 'BR087', date: '2026/09/12', from: 'TPE', depTime: '23:30', to: 'CDG', arrTime: '07:35 (+1)', duration: '14h 05m' },
           { type: '瑞士 (巴黎➔蘇黎世)', code: 'AF1614', date: '2026/09/13', from: 'CDG', depTime: '12:40', to: 'ZRH', arrTime: '13:55', duration: '1h 15m' },
@@ -1232,7 +1232,7 @@
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v4', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v5', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
 
