@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Swiss & Paris Journey 2026</title>
   
-  <!-- 1. CDN 預先連線與 DNS 加速解析 -->
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -14,13 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://open.er-api.com">
 
-  <!-- 2. Google Fonts (加入 display=swap 避免字型載入白屏) -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- 3. Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- 4. Vue 3 + Lucide + SortableJS -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -65,7 +60,7 @@
 
   <div id="app" class="w-full max-w-[480px] min-h-screen bg-nordic-bg shadow-2xl relative pb-28 flex flex-col">
 
-    <!-- 頂部 Hero 圖片 (WebP 高效壓縮 + 背景色打底) -->
+    <!-- 頂部 Hero 圖片 -->
     <header class="relative h-56 w-full overflow-hidden bg-zurich-800 flex-shrink-0">
       <img 
         src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=600&q=65&fm=webp" 
@@ -101,11 +96,12 @@
 
       <!-- ================= 1. 每日行程表 ================= -->
       <section v-show="currentTab === 'schedule'">
+        <!-- 日期滑動選單 (改用切換函式 changeDate) -->
         <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-3 pt-1">
           <button 
             v-for="(day, index) in itineraryDays" 
             :key="day.dateStr"
-            @click="selectedDateIndex = index"
+            @click="changeDate(index)"
             :class="selectedDateIndex === index 
               ? 'bg-zurich-700 text-white shadow-md scale-105' 
               : 'bg-white text-slate-600 border border-slate-200/80'"
@@ -144,14 +140,14 @@
           </button>
         </div>
 
-        <!-- 行程卡片清單 -->
-        <div id="schedule-list" class="space-y-3">
+        <!-- 行程卡片清單 (加上 :key="selectedDateIndex" 避免 Vue DOM 復用錯誤) -->
+        <div id="schedule-list" :key="selectedDateIndex" class="space-y-3">
           <template v-for="(item, idx) in currentDay.items" :key="item.id">
             
             <div v-if="idx > 0" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
               <div class="h-px bg-slate-200 flex-1"></div>
               <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-600">
-                <i :data-lucide="item.transitModeIcon || 'bus'" class="w-3.5 h-3.5 text-zurich-600"></i>
+                <i :data-lucide="getTransitIcon(item.transitModeIcon)" class="w-3.5 h-3.5 text-zurich-600"></i>
                 <span>交通約 {{ item.transitTime || '20 分鐘' }}</span>
               </div>
               <div class="h-px bg-slate-200 flex-1"></div>
@@ -440,7 +436,6 @@
 
       <!-- ================= 4. 花費記帳 (幣別新台幣 TWD) ================= -->
       <section v-show="currentTab === 'expenses'" class="space-y-4">
-        <!-- 總花費統計大卡片 -->
         <div class="bg-gradient-to-br from-zurich-800 to-zurich-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
           <span class="text-xs uppercase font-semibold text-zurich-200">Total Expenses</span>
           <div class="text-3xl font-extrabold mt-1">
@@ -451,7 +446,6 @@
           </div>
         </div>
 
-        <!-- 花費明細列表 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-sm font-bold text-slate-800">支出明細列表</h3>
@@ -498,7 +492,6 @@
     >
       <i data-lucide="plus" class="w-7 h-7"></i>
     </button>
-
 
     <!-- 彈出視窗 1：新增/編輯 行程 Modal -->
     <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
@@ -562,7 +555,6 @@
       </div>
     </div>
 
-
     <!-- 彈出視窗 2：新增購物清單 Modal -->
     <div v-if="showShoppingModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
@@ -594,7 +586,6 @@
         </button>
       </div>
     </div>
-
 
     <!-- 彈出視窗 3：新增花費 Modal -->
     <div v-if="showExpenseModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
@@ -662,6 +653,7 @@
       setup() {
         const currentTab = ref('schedule');
         const selectedDateIndex = ref(0);
+        let sortableInstance = null; // 儲存 Sortable 實例以供安全銷毀與重建
 
         const tabs = [
           { id: 'schedule', name: '每日行程', icon: 'map-pin' },
@@ -769,7 +761,7 @@
                 ticket: '持 Swiss Travel Pass 免費搭乘',
                 notes: '轉乘遊船與齒軌列車登頂。交通工具直達觀景台，長輩全程免爬坡即可飽覽湖光山色。',
                 address: 'Rigi Kulm, Switzerland',
-                transitModeIcon: 'ship',
+                transitModeIcon: 'sailboat',
                 transitTime: '50 分鐘 (遊船+登山火車)'
               }
             ]
@@ -827,7 +819,7 @@
                 ticket: '持 Pass 優惠票券',
                 notes: '搭乘最新大纜車，平穩舒適直抵轉乘站，大幅縮短交通時間。',
                 address: 'Grindelwald Terminal, Switzerland',
-                transitModeIcon: 'cable-car',
+                transitModeIcon: 'mountain',
                 transitTime: '30 分鐘'
               },
               {
@@ -873,7 +865,7 @@
                 ticket: 'Pass 可乘船',
                 notes: '下午悠閒安坐船艙內，在平穩的湖泊上享受下午茶與群山美景。',
                 address: 'Interlaken West ThS, Interlaken',
-                transitModeIcon: 'ship',
+                transitModeIcon: 'sailboat',
                 transitTime: '45 分鐘'
               }
             ]
@@ -1058,7 +1050,7 @@
                 ticket: '含晚餐船票',
                 notes: '全程安坐船上，一邊享用精緻法式晚宴，一邊欣賞被燈光點亮的巴黎地標，免步行且浪漫。',
                 address: 'Port de la Bourdonnais, 75007 Paris',
-                transitModeIcon: 'ship',
+                transitModeIcon: 'sailboat',
                 transitTime: '15 分鐘'
               }
             ]
@@ -1093,7 +1085,7 @@
                 ticket: '地鐵票即可搭纜車',
                 notes: '切勿走階梯！乘計程車抵達纜車站，搭乘纜車直達聖心堂門口，俯瞰全巴黎景色。',
                 address: 'Funiculaire de Montmartre, Paris',
-                transitModeIcon: 'cable-car',
+                transitModeIcon: 'mountain',
                 transitTime: '25 分鐘'
               }
             ]
@@ -1142,16 +1134,21 @@
           }
         ];
 
-        const itineraryDays = ref(JSON.parse(localStorage.getItem('my_itinerary')) || defaultItinerary);
+        // 升級版本 key 為 v3，自動清除所有損壞舊快取
+        let savedItinerary = null;
+        try {
+          const raw = localStorage.getItem('my_itinerary_v3');
+          if (raw) savedItinerary = JSON.parse(raw);
+        } catch(e) {}
+
+        const itineraryDays = ref(savedItinerary || defaultItinerary);
         const shoppingList = ref(JSON.parse(localStorage.getItem('my_shopping')) || []);
-        
-        // 預設花費（新台幣）
         const expenses = ref(JSON.parse(localStorage.getItem('my_expenses')) || [
           { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
 
         const weatherCityMap = {
-          '蘇黎世': { icon: 'sun-cloud', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
+          '蘇黎世': { icon: 'cloud-sun', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
           '琉森 / 瑞吉山': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
           '伯恩 ➔ 茵特拉肯': { icon: 'cloud-sun', summary: '多雲偶見陽光', temp: 18, feelsLike: 17 },
           '歐洲之巔：少女峰': { icon: 'snowflake', summary: '高山雪地 · 嚴寒防風', temp: -2, feelsLike: -7 },
@@ -1160,15 +1157,20 @@
           '日內瓦市區': { icon: 'sun-dim', summary: '湖畔微風 · 舒適', temp: 21, feelsLike: 20 },
           '西庸城堡 / 拉沃葡萄園': { icon: 'sun', summary: '秋季陽光暖和', temp: 22, feelsLike: 22 },
           '日內瓦 ➔ 巴黎': { icon: 'cloud', summary: '陰天多雲', temp: 19, feelsLike: 18 },
-          '巴黎經典與塞納河': { icon: 'sun-cloud', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 },
+          '巴黎經典與塞納河': { icon: 'cloud-sun', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 },
           '巴黎藝術與蒙馬特': { icon: 'sun', summary: '陽光普照', temp: 21, feelsLike: 21 },
           '巴黎退房與啟程': { icon: 'cloud-sun', summary: '微涼晨光', temp: 17, feelsLike: 16 },
         };
 
-        const currentDay = computed(() => itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0]);
-        const currentDayWeather = computed(() => weatherCityMap[currentDay.value.location] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 });
+        const currentDay = computed(() => {
+          return itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0] || { items: [] };
+        });
 
-        // 即時匯率系統
+        const currentDayWeather = computed(() => {
+          const loc = currentDay.value?.location || '蘇黎世';
+          return weatherCityMap[loc] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 };
+        });
+
         const exchangeCurrency = ref('CHF');
         const inputForeignAmount = ref(100);
         const isRateLoading = ref(false);
@@ -1185,7 +1187,6 @@
           return Math.round((inputForeignAmount.value || 0) * rate);
         });
 
-        // 抓取匯率（非同步呼叫）
         const fetchLiveRates = async () => {
           isRateLoading.value = true;
           try {
@@ -1205,7 +1206,7 @@
               localStorage.setItem('rates_last_updated', timeStr);
             }
           } catch (err) {
-            console.warn('匯率連線異常，自動載入離線暫存牌價', err);
+            console.warn('匯率連線異常', err);
           } finally {
             isRateLoading.value = false;
           }
@@ -1225,22 +1226,65 @@
           { name: 'Hôtel Vernet Champs Elysées Paris', dates: '9/21~9/24 (3夜)', address: '25 Rue Vernet, 75008 Paris, France', phone: '+33 1 44 31 98 00' },
         ];
 
-        // 總支出金額（新台幣）
         const totalExpenseTWD = computed(() => {
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v3', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
 
+        // 安全的圖示刷新
         const refreshIcons = () => {
           nextTick(() => {
-            if (window.lucide) window.lucide.createIcons();
+            try {
+              if (window.lucide) window.lucide.createIcons();
+            } catch(e) {}
           });
         };
 
-        watch([currentTab, selectedDateIndex], refreshIcons);
+        // 安全的交通圖示過濾 (保證名稱在 Lucide 中百分之百存在)
+        const getTransitIcon = (icon) => {
+          const valid = ['bus', 'train', 'tram', 'car', 'footprints', 'sailboat', 'mountain', 'plane'];
+          return valid.includes(icon) ? icon : 'bus';
+        };
+
+        // 重新封裝 Sortable 初始化（銷毀舊實例後重建，避開 Vue DOM 衝突）
+        const initSortable = () => {
+          if (sortableInstance) {
+            try { sortableInstance.destroy(); } catch(e) {}
+            sortableInstance = null;
+          }
+          nextTick(() => {
+            const el = document.getElementById('schedule-list');
+            if (el && window.Sortable) {
+              sortableInstance = Sortable.create(el, {
+                animation: 200,
+                handle: '.cursor-grab',
+                onEnd: (evt) => {
+                  const dayItems = currentDay.value.items;
+                  const movedItem = dayItems.splice(evt.oldIndex, 1)[0];
+                  dayItems.splice(evt.newIndex, 0, movedItem);
+                  refreshIcons();
+                }
+              });
+            }
+          });
+        };
+
+        // 日期切換的核心函式：無痛過渡，保證絕不反白
+        const changeDate = (index) => {
+          selectedDateIndex.value = index;
+          nextTick(() => {
+            refreshIcons();
+            initSortable();
+          });
+        };
+
+        watch(currentTab, () => {
+          refreshIcons();
+          if (currentTab.value === 'schedule') initSortable();
+        });
 
         const openGoogleMap = (query) => {
           if (!query) return;
@@ -1399,27 +1443,9 @@
           }
         };
 
-        const initSortable = () => {
-          const el = document.getElementById('schedule-list');
-          if (el && window.Sortable) {
-            Sortable.create(el, {
-              animation: 200,
-              handle: '.cursor-grab',
-              onEnd: (evt) => {
-                const dayItems = currentDay.value.items;
-                const movedItem = dayItems.splice(evt.oldIndex, 1)[0];
-                dayItems.splice(evt.newIndex, 0, movedItem);
-                refreshIcons();
-              }
-            });
-          }
-        };
-
         onMounted(() => {
           refreshIcons();
           initSortable();
-          
-          // 效能優化：延遲 250ms 背景執行匯率抓取，優先釋放主執行緒繪製首屏
           setTimeout(() => {
             fetchLiveRates();
           }, 250);
@@ -1451,6 +1477,7 @@
           shoppingForm,
           showExpenseModal,
           expenseForm,
+          changeDate,
           handleFabClick,
           openEditModal,
           closeScheduleModal,
@@ -1463,6 +1490,7 @@
           deleteExpense,
           categoryBadgeColor,
           expenseCategoryIcon,
+          getTransitIcon,
           openGoogleMap
         };
       }
