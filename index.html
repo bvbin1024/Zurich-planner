@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Swiss & Paris Journey 2026</title>
   
-  <!-- ================= PWA 獨立 App 設定 (內嵌支援) ================= -->
+  <!-- ================= PWA 獨立 App 設定 ================= -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,8 +18,6 @@
   <!-- CDN 預先連線與字型 -->
   <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://open.er-api.com">
@@ -29,8 +27,6 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -98,7 +94,7 @@
           class="p-2.5 rounded-full transition-all duration-300 flex items-center justify-center relative"
           :title="tab.name"
         >
-          <i :data-lucide="tab.icon" class="w-5 h-5"></i>
+          <app-icon :name="tab.icon" class="w-5 h-5" />
         </button>
       </nav>
     </header>
@@ -108,6 +104,7 @@
 
       <!-- ================= 1. 每日行程表 ================= -->
       <section v-show="currentTab === 'schedule'">
+        <!-- 日期滑動列 -->
         <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-3 pt-1">
           <button 
             v-for="(day, index) in itineraryDays" 
@@ -116,27 +113,27 @@
             :class="selectedDateIndex === index 
               ? 'bg-zurich-700 text-white shadow-md scale-105' 
               : 'bg-white text-slate-600 border border-slate-200/80'"
-            class="flex-shrink-0 flex flex-col items-center justify-center w-[58px] h-[68px] rounded-2xl transition-all duration-200"
+            class="flex-shrink-0 flex flex-col items-center justify-center w-[58px] h-[68px] rounded-2xl transition-all duration-150"
           >
             <span class="text-xs font-bold tracking-wide uppercase">{{ day.weekday }}</span>
             <span class="text-lg font-semibold leading-none mt-1">{{ day.dayNumber }}</span>
           </button>
         </div>
 
-        <!-- 每日天氣資訊 -->
+        <!-- 每日天氣資訊 (加入全面可選串連防呆) -->
         <div class="bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-3.5 mb-4 mt-2 shadow-sm">
           <div class="flex items-center justify-between pb-2 border-b border-slate-100/80">
             <div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-zurich-600"></i>
-              <span>{{ currentDay.location }} 天氣預報</span>
+              <app-icon name="map-pin" class="w-3.5 h-3.5 text-zurich-600" />
+              <span>{{ currentDay?.location || '當地' }} 天氣預報</span>
             </div>
             
             <button 
-              @click="fetchLiveWeather(currentDay.location)" 
+              @click="fetchLiveWeather(currentDay?.location)" 
               :disabled="isWeatherLoading"
               class="text-[11px] text-zurich-600 hover:text-zurich-800 font-semibold flex items-center gap-1 transition disabled:opacity-50"
             >
-              <i data-lucide="refresh-cw" :class="isWeatherLoading ? 'animate-spin' : ''" class="w-3 h-3"></i>
+              <app-icon name="refresh-cw" :class="isWeatherLoading ? 'animate-spin' : ''" class="w-3 h-3" />
               <span>{{ isWeatherLoading ? '更新中' : '即時更新' }}</span>
             </button>
           </div>
@@ -144,24 +141,24 @@
           <div class="flex items-center justify-between pt-2.5">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-zurich-50 flex items-center justify-center text-zurich-600">
-                <i :data-lucide="currentDayWeather.icon" class="w-6 h-6"></i>
+                <app-icon :name="currentDayWeather?.icon || 'cloud-sun'" class="w-6 h-6" />
               </div>
               <div>
-                <div class="text-sm font-bold text-slate-700">{{ currentDayWeather.summary }}</div>
+                <div class="text-sm font-bold text-slate-700">{{ currentDayWeather?.summary || '氣候舒適' }}</div>
                 <div class="text-[10px] text-slate-400">更新時間：{{ weatherLastUpdated }}</div>
               </div>
             </div>
             <div class="text-right">
-              <div class="text-xl font-extrabold text-zurich-800">{{ currentDayWeather.temp }}°C</div>
-              <div class="text-[11px] text-slate-400">體感 {{ currentDayWeather.feelsLike }}°C</div>
+              <div class="text-xl font-extrabold text-zurich-800">{{ currentDayWeather?.temp ?? 18 }}°C</div>
+              <div class="text-[11px] text-slate-400">體感 {{ currentDayWeather?.feelsLike ?? 17 }}°C</div>
             </div>
           </div>
         </div>
 
         <!-- 住宿資訊小卡 -->
-        <div v-if="currentDay.hotel" class="mb-4 bg-zurich-50/70 border border-zurich-100 rounded-xl p-3 flex items-center justify-between">
+        <div v-if="currentDay?.hotel" class="mb-4 bg-zurich-50/70 border border-zurich-100 rounded-xl p-3 flex items-center justify-between">
           <div class="flex items-center gap-2.5 text-xs text-zurich-800 font-medium">
-            <i data-lucide="bed" class="w-4 h-4 text-zurich-600 flex-shrink-0"></i>
+            <app-icon name="bed" class="w-4 h-4 text-zurich-600 shrink-0" />
             <span class="truncate">今晚住宿：{{ currentDay.hotel.name }}</span>
           </div>
           <button @click="openGoogleMap(currentDay.hotel.address)" class="text-xs text-zurich-600 font-semibold flex items-center gap-0.5 underline shrink-0">
@@ -170,32 +167,33 @@
         </div>
 
         <!-- 行程卡片清單 -->
-        <div id="schedule-list" :key="selectedDateIndex" class="space-y-3">
-          <template v-for="(item, idx) in currentDay.items" :key="item.id">
+        <div class="space-y-3">
+          <div v-for="(item, idx) in (currentDay?.items || [])" :key="item.id" class="space-y-3">
             
+            <!-- 上下行程間的交通資訊 -->
             <div v-if="idx > 0" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
               <div class="h-px bg-slate-200 flex-1"></div>
               <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-600">
-                <i :data-lucide="getTransitIcon(item.transitModeIcon)" class="w-3.5 h-3.5 text-zurich-600"></i>
+                <app-icon :name="getTransitIcon(item.transitModeIcon)" class="w-3.5 h-3.5 text-zurich-600" />
                 <span>交通約 {{ item.transitTime || '20 分鐘' }}</span>
               </div>
               <div class="h-px bg-slate-200 flex-1"></div>
             </div>
 
-            <div v-else-if="idx === 0 && currentDay.fromPrevHotelTransit" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
+            <!-- 當日首個行程自前一晚飯店出發交通 -->
+            <div v-else-if="idx === 0 && currentDay?.fromPrevHotelTransit" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
               <div class="h-px bg-slate-200 flex-1"></div>
               <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-600">
-                <i data-lucide="footprints" class="w-3.5 h-3.5 text-zurich-600"></i>
+                <app-icon name="footprints" class="w-3.5 h-3.5 text-zurich-600" />
                 <span>從飯店出發：{{ currentDay.fromPrevHotelTransit }}</span>
               </div>
               <div class="h-px bg-slate-200 flex-1"></div>
             </div>
 
-            <!-- 航班專用卡片 (TPE ➔ CDG) -->
+            <!-- 航班專用卡片 -->
             <div 
               v-if="item.category === '航班'" 
-              class="bg-gradient-to-br from-zurich-700 to-zurich-800 text-white rounded-2xl p-4 shadow-md relative cursor-grab active:cursor-grabbing border border-zurich-600"
-              :data-id="item.id"
+              class="bg-gradient-to-br from-zurich-700 to-zurich-800 text-white rounded-2xl p-4 shadow-md relative border border-zurich-600"
             >
               <div class="flex justify-between items-center text-xs text-zurich-200 pb-2 border-b border-white/10">
                 <span class="font-bold tracking-wider">{{ item.flightCode || 'FLIGHT' }}</span>
@@ -210,7 +208,7 @@
                   <span class="text-[10px] text-zurich-200">{{ item.duration || '直飛' }}</span>
                   <div class="w-full flex items-center my-1">
                     <div class="h-0.5 w-full bg-zurich-200/40"></div>
-                    <i data-lucide="plane" class="w-4 h-4 text-white mx-1 transform rotate-90"></i>
+                    <app-icon name="plane" class="w-4 h-4 text-white mx-1 transform rotate-90" />
                     <div class="h-0.5 w-full bg-zurich-200/40"></div>
                   </div>
                   <span class="text-[10px] text-zurich-200 font-mono">{{ item.airline || 'Flight' }}</span>
@@ -229,8 +227,7 @@
             <!-- 一般行程卡片 -->
             <div 
               v-else 
-              class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:border-zurich-200 transition-all cursor-grab active:cursor-grabbing relative"
-              :data-id="item.id"
+              class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:border-zurich-200 transition-all relative"
             >
               <div class="flex items-start justify-between">
                 <div class="flex items-center gap-2">
@@ -241,18 +238,18 @@
                 </div>
                 <div class="flex items-center gap-1.5">
                   <button @click.stop="openEditModal(item)" class="text-slate-300 hover:text-slate-600 p-1">
-                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                    <app-icon name="pencil" class="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
               <div class="mt-2.5 space-y-1 text-xs text-slate-500">
                 <div v-if="item.hours" class="flex items-center gap-1.5">
-                  <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <app-icon name="clock" class="w-3.5 h-3.5 text-slate-400" />
                   <span>營業時間：{{ item.hours }}</span>
                 </div>
                 <div v-if="item.category === '景點' && item.ticket" class="flex items-center gap-1.5">
-                  <i data-lucide="ticket" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <app-icon name="ticket" class="w-3.5 h-3.5 text-slate-400" />
                   <span>門票：{{ item.ticket }}</span>
                 </div>
               </div>
@@ -264,15 +261,15 @@
               <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-end">
                 <button 
                   @click.stop="openGoogleMap(item.address || item.name)"
-                  class="flex items-center gap-1.5 text-xs font-semibold text-zurich-600 hover:text-zurich-800 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 transition shadow-xs"
+                  class="flex items-center gap-1.5 text-xs font-semibold text-zurich-600 hover:text-zurich-800 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/70 transition"
                 >
-                  <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i>
+                  <app-icon name="navigation-2" class="w-3.5 h-3.5" />
                   <span>Google Maps 導航</span>
                 </button>
               </div>
             </div>
 
-          </template>
+          </div>
         </div>
       </section>
 
@@ -280,12 +277,12 @@
       <!-- ================= 2. 資訊頁 (i) ================= -->
       <section v-show="currentTab === 'info'" class="space-y-4">
         
-        <!-- Swiss Travel Pass 快速查驗專區 (支援自動壓縮永久儲存) -->
+        <!-- Swiss Travel Pass 快速查驗專區 -->
         <div class="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-2xl p-4 shadow-md border border-red-500 relative overflow-hidden">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 rounded-lg bg-white/20 text-white">
-                <i data-lucide="qr-code" class="w-4 h-4"></i>
+                <app-icon name="qr-code" class="w-4 h-4" />
               </div>
               <div>
                 <h2 class="text-sm font-bold tracking-tight">Swiss Travel Pass</h2>
@@ -302,7 +299,8 @@
           <div v-if="swissPassQr" @click="showFullScreenQr = true" class="bg-white rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer shadow-inner group">
             <img :src="swissPassQr" alt="Swiss Pass QR" class="max-h-48 object-contain rounded-lg transition-transform group-hover:scale-102" />
             <span class="text-[11px] text-slate-500 font-semibold mt-2.5 flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full">
-              <i data-lucide="maximize-2" class="w-3 h-3 text-red-600"></i> 點擊放大全螢幕供車長查驗
+              <app-icon name="maximize-2" class="w-3 h-3 text-red-600" />
+              點擊放大全螢幕供車長查驗
             </span>
           </div>
 
@@ -325,7 +323,7 @@
                 <p class="text-[10px] text-slate-400">請保持螢幕高亮度</p>
               </div>
               <button @click="showFullScreenQr = false" class="text-slate-400 hover:text-slate-600 p-1">
-                <i data-lucide="x" class="w-5 h-5"></i>
+                <app-icon name="x" class="w-5 h-5" />
               </button>
             </div>
             
@@ -342,7 +340,7 @@
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
               <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
-                <i data-lucide="calculator" class="w-4 h-4"></i>
+                <app-icon name="calculator" class="w-4 h-4" />
               </div>
               <h2 class="text-sm font-bold text-slate-800">匯率即時換算 (➔ 新台幣 TWD)</h2>
             </div>
@@ -352,7 +350,7 @@
               :disabled="isRateLoading"
               class="text-xs text-zurich-600 flex items-center gap-1 hover:text-zurich-800 transition disabled:opacity-50"
             >
-              <i data-lucide="refresh-cw" :class="isRateLoading ? 'animate-spin' : ''" class="w-3.5 h-3.5"></i>
+              <app-icon name="refresh-cw" :class="isRateLoading ? 'animate-spin' : ''" class="w-3.5 h-3.5" />
               <span>{{ isRateLoading ? '更新中' : '即時更新' }}</span>
             </button>
           </div>
@@ -394,7 +392,7 @@
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center gap-2 mb-3">
             <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
-              <i data-lucide="plane" class="w-4 h-4"></i>
+              <app-icon name="plane" class="w-4 h-4" />
             </div>
             <h2 class="text-sm font-bold text-slate-800">航班明細表 (去程 / 轉機 / 回程)</h2>
           </div>
@@ -427,7 +425,7 @@
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center gap-2 mb-3">
             <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
-              <i data-lucide="home" class="w-4 h-4"></i>
+              <app-icon name="bed" class="w-4 h-4" />
             </div>
             <h2 class="text-sm font-bold text-slate-800">住宿資訊</h2>
           </div>
@@ -442,7 +440,7 @@
               <div class="flex justify-between items-center pt-1">
                 <span class="text-slate-400">Tel: {{ hotel.phone }}</span>
                 <button @click="openGoogleMap(hotel.address)" class="font-semibold text-zurich-600 flex items-center gap-1 underline">
-                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Google Maps
+                  <app-icon name="map-pin" class="w-3.5 h-3.5" /> Google Maps
                 </button>
               </div>
             </div>
@@ -453,7 +451,7 @@
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center gap-2 mb-3">
             <div class="p-1.5 rounded-lg bg-rose-50 text-rose-600">
-              <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              <app-icon name="shield-alert" class="w-4 h-4" />
             </div>
             <h2 class="text-sm font-bold text-slate-800">緊急電話與醫療</h2>
           </div>
@@ -496,11 +494,11 @@
             <div class="w-full h-32 bg-slate-100 relative overflow-hidden flex items-center justify-center">
               <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
               <div v-else class="flex flex-col items-center text-slate-300">
-                <i data-lucide="image" class="w-8 h-8"></i>
+                <app-icon name="image" class="w-8 h-8" />
                 <span class="text-[10px] mt-1">無照片</span>
               </div>
               <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                <app-icon name="x" class="w-3.5 h-3.5" />
               </button>
             </div>
             <div class="p-3 flex-1 flex flex-col justify-between">
@@ -546,7 +544,7 @@
             <div v-for="(exp, eIdx) in expenses" :key="exp.id" class="py-3 flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
-                  <i :data-lucide="expenseCategoryIcon(exp.category)" class="w-4 h-4"></i>
+                  <app-icon :name="expenseCategoryIcon(exp.category)" class="w-4 h-4" />
                 </div>
                 <div>
                   <div class="font-bold text-sm text-slate-800">{{ exp.name }}</div>
@@ -576,7 +574,7 @@
       class="fixed bottom-6 right-6 md:right-[calc(50%-216px)] w-14 h-14 bg-zurich-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-zurich-700 active:scale-95 transition-all z-30"
       title="新增項目"
     >
-      <i data-lucide="plus" class="w-7 h-7"></i>
+      <app-icon name="plus" class="w-7 h-7" />
     </button>
 
     <!-- 彈出視窗 1：新增/編輯 行程 Modal -->
@@ -584,7 +582,9 @@
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-bold text-base text-slate-800">{{ isEditingSchedule ? '編輯行程' : '新增行程' }}</h3>
-          <button @click="closeScheduleModal" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+          <button @click="closeScheduleModal" class="text-slate-400 hover:text-slate-600">
+            <app-icon name="x" class="w-5 h-5" />
+          </button>
         </div>
 
         <div class="space-y-3 text-xs">
@@ -641,12 +641,14 @@
       </div>
     </div>
 
-    <!-- 彈出視窗 2：新增購物清單 Modal (支援壓縮) -->
+    <!-- 彈出視窗 2：新增購物清單 Modal -->
     <div v-if="showShoppingModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-bold text-base text-slate-800">新增購物想買物品</h3>
-          <button @click="showShoppingModal = false"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+          <button @click="showShoppingModal = false">
+            <app-icon name="x" class="w-5 h-5 text-slate-400" />
+          </button>
         </div>
 
         <div class="space-y-3 text-xs">
@@ -678,7 +680,9 @@
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
           <h3 class="font-bold text-base text-slate-800">記帳（新增花費）</h3>
-          <button @click="showExpenseModal = false"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
+          <button @click="showExpenseModal = false">
+            <app-icon name="x" class="w-5 h-5 text-slate-400" />
+          </button>
         </div>
 
         <div class="space-y-3 text-xs">
@@ -733,13 +737,55 @@
   </div>
 
   <script>
-    const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+    const { createApp, ref, computed, onMounted, watch } = Vue;
 
-    createApp({
+    const AppIcon = {
+      props: ['name'],
+      template: `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block shrink-0">
+          <template v-if="name === 'map-pin'"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></template>
+          <template v-else-if="name === 'navigation-2'"><polygon points="12 2 19 21 12 17 5 21 12 2"/></template>
+          <template v-else-if="name === 'info'"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></template>
+          <template v-else-if="name === 'shopping-bag'"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></template>
+          <template v-else-if="name === 'badge-dollar-sign'"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></template>
+          
+          <template v-else-if="name === 'train'"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M4 10h16"/><path d="m8 20-2 2"/><path d="m16 20 2 2"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></template>
+          <template v-else-if="name === 'bus'"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4C2.9 6 1.9 6.8 1.6 7.8l-1.4 5c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><circle cx="15" cy="18" r="2"/></template>
+          <template v-else-if="name === 'plane'"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></template>
+          <template v-else-if="name === 'tram'"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M4 10h16"/><path d="M12 4v-2"/><path d="m8 2 8 0"/></template>
+          <template v-else-if="name === 'car'"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12 1 13v3c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></template>
+          <template v-else-if="name === 'sailboat'"><path d="M22 18H2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3Z"/><path d="M2 14c5 0 8 3 8 3V2L2 14Z"/><path d="M14 17c1.5-3 4-5 8-5V7l-8 10Z"/></template>
+          <template v-else-if="name === 'mountain'"><path d="m8 3 4 8 5-5 5 15H2L8 3z"/><path d="m4.14 15 .86-1.5 2.5 2.5"/></template>
+          <template v-else-if="name === 'footprints'"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.5v2"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.5v2"/></template>
+          
+          <template v-else-if="name === 'bed'"><path d="M2 4v16"/><path d="M2 8h18a2 2 0 0 1 2 2v10"/><path d="M2 17h20"/><path d="M6 8v9"/></template>
+          <template v-else-if="name === 'pencil'"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></template>
+          <template v-else-if="name === 'clock'"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></template>
+          <template v-else-if="name === 'ticket'"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/></template>
+          <template v-else-if="name === 'qr-code'"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></template>
+          <template v-else-if="name === 'maximize-2'"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/></template>
+          <template v-else-if="name === 'refresh-cw'"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></template>
+          <template v-else-if="name === 'calculator'"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></template>
+          <template v-else-if="name === 'shield-alert'"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></template>
+          <template v-else-if="name === 'plus'"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></template>
+          <template v-else-if="name === 'x'"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></template>
+          <template v-else-if="name === 'image'"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></template>
+          
+          <template v-else-if="name === 'sun'"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></template>
+          <template v-else-if="name === 'cloud-sun'"><path d="M12 2v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="M20 12h2"/><path d="m19.07 4.93-1.41 1.41"/><path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></template>
+          <template v-else-if="name === 'cloud'"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></template>
+          <template v-else-if="name === 'snowflake'"><line x1="2" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="22"/><path d="m20 16-4-4 4-4"/><path d="m4 8 4 4-4 4"/><path d="m16 4-4 4-4-4"/><path d="m8 20 4-4 4 4"/></template>
+          <template v-else-if="name === 'cloud-rain'"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></template>
+          
+          <template v-else><circle cx="12" cy="12" r="9"/></template>
+        </svg>
+      `
+    };
+
+    const app = createApp({
       setup() {
         const currentTab = ref('schedule');
         const selectedDateIndex = ref(0);
-        let sortableInstance = null;
 
         const tabs = [
           { id: 'schedule', name: '每日行程', icon: 'map-pin' },
@@ -748,12 +794,13 @@
           { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
         ];
 
+        // 9/15 地名正規化為「伯恩 - 茵特拉肯」，避免特殊符號解析異常
         const defaultItinerary = [
           {
             dateStr: '2026-09-12',
             weekday: 'Sat',
             dayNumber: '12',
-            location: '台北 ➔ 巴黎',
+            location: '台北',
             hotel: null,
             fromPrevHotelTransit: null,
             items: [
@@ -821,7 +868,7 @@
             dateStr: '2026-09-14',
             weekday: 'Mon',
             dayNumber: '14',
-            location: '琉森 / 瑞吉山',
+            location: '琉森',
             hotel: {
               name: 'AMERON Zürich Bellerive au Lac',
               address: '47 Utoquai, 8008 Zürich, Switzerland'
@@ -856,7 +903,7 @@
             dateStr: '2026-09-15',
             weekday: 'Tue',
             dayNumber: '15',
-            location: '伯恩 ➔ 茵特拉肯',
+            location: '伯恩',
             hotel: {
               name: 'Aparthotel Krone - Self Check-In',
               address: '16 Spielmatte, 3800 Interlaken, Switzerland'
@@ -890,7 +937,7 @@
             dateStr: '2026-09-16',
             weekday: 'Wed',
             dayNumber: '16',
-            location: '歐洲之巔：少女峰',
+            location: '少女峰',
             hotel: {
               name: 'Aparthotel Krone - Self Check-In',
               address: '16 Spielmatte, 3800 Interlaken, Switzerland'
@@ -925,7 +972,7 @@
             dateStr: '2026-09-17',
             weekday: 'Thu',
             dayNumber: '17',
-            location: '瀑布鎮 / 圖恩湖',
+            location: '瀑布鎮',
             hotel: {
               name: 'Aparthotel Krone - Self Check-In',
               address: '16 Spielmatte, 3800 Interlaken, Switzerland'
@@ -960,7 +1007,7 @@
             dateStr: '2026-09-18',
             weekday: 'Fri',
             dayNumber: '18',
-            location: '黃金列車 ➔ 日內瓦',
+            location: '日內瓦',
             hotel: {
               name: 'Adina Apartment Hotel Geneva',
               address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
@@ -994,7 +1041,7 @@
             dateStr: '2026-09-19',
             weekday: 'Sat',
             dayNumber: '19',
-            location: '日內瓦市區',
+            location: '日內瓦',
             hotel: {
               name: 'Adina Apartment Hotel Geneva',
               address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
@@ -1029,7 +1076,7 @@
             dateStr: '2026-09-20',
             weekday: 'Sun',
             dayNumber: '20',
-            location: '西庸城堡 / 拉沃葡萄園',
+            location: '西庸城堡',
             hotel: {
               name: 'Adina Apartment Hotel Geneva',
               address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
@@ -1064,7 +1111,7 @@
             dateStr: '2026-09-21',
             weekday: 'Mon',
             dayNumber: '21',
-            location: '日內瓦 ➔ 巴黎',
+            location: '巴黎',
             hotel: {
               name: 'Hôtel Vernet Champs Elysées Paris',
               address: '25 Rue Vernet, 75008 Paris, France'
@@ -1099,7 +1146,7 @@
             dateStr: '2026-09-22',
             weekday: 'Tue',
             dayNumber: '22',
-            location: '巴黎經典與塞納河',
+            location: '巴黎',
             hotel: {
               name: 'Hôtel Vernet Champs Elysées Paris',
               address: '25 Rue Vernet, 75008 Paris, France'
@@ -1145,7 +1192,7 @@
             dateStr: '2026-09-23',
             weekday: 'Wed',
             dayNumber: '23',
-            location: '巴黎藝術與蒙馬特',
+            location: '巴黎',
             hotel: {
               name: 'Hôtel Vernet Champs Elysées Paris',
               address: '25 Rue Vernet, 75008 Paris, France'
@@ -1180,7 +1227,7 @@
             dateStr: '2026-09-24',
             weekday: 'Thu',
             dayNumber: '24',
-            location: '巴黎退房與啟程',
+            location: '巴黎',
             hotel: null,
             fromPrevHotelTransit: '08:20 前抵達戴高樂機場 CDG',
             items: [
@@ -1200,7 +1247,7 @@
             dateStr: '2026-10-05',
             weekday: 'Mon',
             dayNumber: '05',
-            location: '返台航班',
+            location: '台北',
             hotel: null,
             fromPrevHotelTransit: null,
             items: [
@@ -1220,10 +1267,10 @@
           }
         ];
 
-        // 升級版本 key 為 v11
+        // 升級版本 key 為 v16，強制作廢舊有損壞快取
         let savedItinerary = null;
         try {
-          const raw = localStorage.getItem('my_itinerary_v11');
+          const raw = localStorage.getItem('my_itinerary_v16');
           if (raw) savedItinerary = JSON.parse(raw);
         } catch(e) {}
 
@@ -1233,11 +1280,9 @@
           { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
 
-        // Swiss Pass 狀態 (讀取快取)
         const swissPassQr = ref(localStorage.getItem('my_swiss_pass_qr') || null);
         const showFullScreenQr = ref(false);
 
-        // 高效圖片 Canvas 等比壓縮公用函式 (解決 localStorage 5MB 上限)
         const compressImage = (file, maxDim, quality, callback) => {
           const reader = new FileReader();
           reader.onload = (event) => {
@@ -1265,7 +1310,6 @@
           reader.readAsDataURL(file);
         };
 
-        // Swiss Pass 上傳 (自動壓縮至 800px，畫質 0.8，確保容量僅 ~120KB，重開絕對不消失)
         const handleSwissPassUpload = (e) => {
           const file = e.target.files[0];
           if (!file) return;
@@ -1275,55 +1319,45 @@
               swissPassQr.value = compressedBase64;
               localStorage.setItem('my_swiss_pass_qr', compressedBase64);
             } catch (err) {
-              console.error('儲存失敗：', err);
-              alert('圖片仍超出容量上限，請截圖較小的局部 QR Code 後重試。');
+              alert('圖片容量過大，請截圖較小的局部 QR Code 後重試。');
             }
-            refreshIcons();
           });
         };
 
+        // 地標座標清單（鍵值皆為純文字，排除符號異常）
         const cityCoordMap = {
-          '台北 ➔ 巴黎': { lat: 25.03, lon: 121.56, defName: '台北' },
-          '蘇黎世': { lat: 47.37, lon: 8.54, defName: '蘇黎世' },
-          '琉森 / 瑞吉山': { lat: 47.05, lon: 8.30, defName: '琉森' },
-          '伯恩 ➔ 茵特拉肯': { lat: 46.94, lon: 7.44, defName: '伯恩' },
-          '歐洲之巔：少女峰': { lat: 46.58, lon: 7.96, defName: '少女峰' },
-          '瀑布鎮 / 圖恩湖': { lat: 46.60, lon: 7.90, defName: '瀑布鎮' },
-          '黃金列車 ➔ 日內瓦': { lat: 46.43, lon: 6.91, defName: '蒙特勒' },
-          '日內瓦市區': { lat: 46.20, lon: 6.14, defName: '日內瓦' },
-          '西庸城堡 / 拉沃葡萄園': { lat: 46.49, lon: 6.74, defName: '拉沃' },
-          '日內瓦 ➔ 巴黎': { lat: 48.85, lon: 2.35, defName: '巴黎' },
-          '巴黎經典與塞納河': { lat: 48.85, lon: 2.35, defName: '巴黎' },
-          '巴黎藝術與蒙馬特': { lat: 48.85, lon: 2.35, defName: '巴黎' },
-          '巴黎退房與啟程': { lat: 49.00, lon: 2.55, defName: '巴黎戴高樂' },
-          '返台航班': { lat: 49.00, lon: 2.55, defName: '巴黎戴高樂' }
+          '台北': { lat: 25.03, lon: 121.56 },
+          '蘇黎世': { lat: 47.37, lon: 8.54 },
+          '琉森': { lat: 47.05, lon: 8.30 },
+          '伯恩': { lat: 46.94, lon: 7.44 },
+          '少女峰': { lat: 46.58, lon: 7.96 },
+          '瀑布鎮': { lat: 46.60, lon: 7.90 },
+          '日內瓦': { lat: 46.20, lon: 6.14 },
+          '西庸城堡': { lat: 46.49, lon: 6.74 },
+          '巴黎': { lat: 48.85, lon: 2.35 }
         };
 
         const defaultWeatherMap = {
-          '台北 ➔ 巴黎': { icon: 'cloud-sun', summary: '出發啟程 · 舒適', temp: 28, feelsLike: 29 },
+          '台北': { icon: 'cloud-sun', summary: '出發啟程 · 舒適', temp: 28, feelsLike: 29 },
           '蘇黎世': { icon: 'cloud-sun', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
-          '琉森 / 瑞吉山': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
-          '伯恩 ➔ 茵特拉肯': { icon: 'cloud-sun', summary: '多雲偶見陽光', temp: 18, feelsLike: 17 },
-          '歐洲之巔：少女峰': { icon: 'snowflake', summary: '高山雪地 · 嚴寒防風', temp: -2, feelsLike: -7 },
-          '瀑布鎮 / 圖恩湖': { icon: 'cloud-rain', summary: '微雨清涼', temp: 15, feelsLike: 14 },
-          '黃金列車 ➔ 日內瓦': { icon: 'sun', summary: '晴朗舒適', temp: 20, feelsLike: 20 },
-          '日內瓦市區': { icon: 'sun-dim', summary: '湖畔微風 · 舒適', temp: 21, feelsLike: 20 },
-          '西庸城堡 / 拉沃葡萄園': { icon: 'sun', summary: '秋季陽光暖和', temp: 22, feelsLike: 22 },
-          '日內瓦 ➔ 巴黎': { icon: 'cloud', summary: '陰天多雲', temp: 19, feelsLike: 18 },
-          '巴黎經典與塞納河': { icon: 'cloud-sun', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 },
-          '巴黎藝術與蒙馬特': { icon: 'sun', summary: '陽光普照', temp: 21, feelsLike: 21 },
-          '巴黎退房與啟程': { icon: 'cloud-sun', summary: '微涼晨光', temp: 17, feelsLike: 16 },
-          '返台航班': { icon: 'cloud-sun', summary: '晴朗舒適', temp: 18, feelsLike: 18 }
+          '琉森': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
+          '伯恩': { icon: 'cloud-sun', summary: '多雲偶見陽光', temp: 18, feelsLike: 17 },
+          '少女峰': { icon: 'snowflake', summary: '高山雪地 · 嚴寒防風', temp: -2, feelsLike: -7 },
+          '瀑布鎮': { icon: 'cloud-rain', summary: '微雨清涼', temp: 15, feelsLike: 14 },
+          '日內瓦': { icon: 'sun-dim', summary: '湖畔微風 · 舒適', temp: 21, feelsLike: 20 },
+          '西庸城堡': { icon: 'sun', summary: '秋季陽光暖和', temp: 22, feelsLike: 22 },
+          '巴黎': { icon: 'cloud-sun', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 }
         };
 
         const isWeatherLoading = ref(false);
-        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v11')) || defaultWeatherMap);
+        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v16')) || defaultWeatherMap);
         const weatherLastUpdated = ref(localStorage.getItem('weather_last_updated') || '尚未更新');
 
         const currentDay = computed(() => {
           return itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0] || { items: [] };
         });
 
+        // 徹底防護：確保 currentDayWeather 永不為 undefined
         const currentDayWeather = computed(() => {
           const loc = currentDay.value?.location || '蘇黎世';
           return liveWeatherData.value[loc] || defaultWeatherMap[loc] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 };
@@ -1333,11 +1367,8 @@
           if (code === 0) return { icon: 'sun', summary: '晴朗無雲' };
           if ([1, 2].includes(code)) return { icon: 'cloud-sun', summary: '晴時多雲' };
           if (code === 3) return { icon: 'cloud', summary: '陰天多雲' };
-          if ([45, 48].includes(code)) return { icon: 'cloud-fog', summary: '晨霧起霧' };
-          if ([51, 53, 55, 61, 63].includes(code)) return { icon: 'cloud-rain', summary: '局部短暫陣雨' };
-          if ([65, 80, 81, 82].includes(code)) return { icon: 'cloud-rain', summary: '持續降雨' };
-          if ([71, 73, 75, 77, 85, 86].includes(code)) return { icon: 'snowflake', summary: '飄雪結冰' };
-          if ([95, 96, 99].includes(code)) return { icon: 'cloud-lightning', summary: '雷雨天氣' };
+          if ([51, 53, 55, 61, 63, 65].includes(code)) return { icon: 'cloud-rain', summary: '局部降雨' };
+          if ([71, 73, 75, 77].includes(code)) return { icon: 'snowflake', summary: '降雪結冰' };
           return { icon: 'cloud-sun', summary: '多雲天氣' };
         };
 
@@ -1366,14 +1397,13 @@
               const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
               weatherLastUpdated.value = timeStr;
 
-              localStorage.setItem('cached_weather_v11', JSON.stringify(liveWeatherData.value));
+              localStorage.setItem('cached_weather_v16', JSON.stringify(liveWeatherData.value));
               localStorage.setItem('weather_last_updated', timeStr);
             }
           } catch (err) {
-            console.warn('天氣 API 連線失敗，保持本地暫存資料', err);
+            console.warn('天氣 API 連線異常，維持本地資料');
           } finally {
             isWeatherLoading.value = false;
-            refreshIcons();
           }
         };
 
@@ -1413,7 +1443,7 @@
               localStorage.setItem('rates_last_updated', timeStr);
             }
           } catch (err) {
-            console.warn('匯率連線異常', err);
+            console.warn('匯率連線異常');
           } finally {
             isRateLoading.value = false;
           }
@@ -1437,58 +1467,18 @@
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v11', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v16', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
-
-        const refreshIcons = () => {
-          nextTick(() => {
-            try {
-              if (window.lucide) window.lucide.createIcons();
-            } catch(e) {}
-          });
-        };
 
         const getTransitIcon = (icon) => {
           const valid = ['bus', 'train', 'tram', 'car', 'footprints', 'sailboat', 'mountain', 'plane'];
           return valid.includes(icon) ? icon : 'bus';
         };
 
-        const initSortable = () => {
-          if (sortableInstance) {
-            try { sortableInstance.destroy(); } catch(e) {}
-            sortableInstance = null;
-          }
-          nextTick(() => {
-            const el = document.getElementById('schedule-list');
-            if (el && window.Sortable) {
-              sortableInstance = Sortable.create(el, {
-                animation: 200,
-                handle: '.cursor-grab',
-                onEnd: (evt) => {
-                  const dayItems = currentDay.value.items;
-                  const movedItem = dayItems.splice(evt.oldIndex, 1)[0];
-                  dayItems.splice(evt.newIndex, 0, movedItem);
-                  refreshIcons();
-                }
-              });
-            }
-          });
-        };
-
         const changeDate = (index) => {
           selectedDateIndex.value = index;
-          nextTick(() => {
-            refreshIcons();
-            initSortable();
-            fetchLiveWeather(currentDay.value.location);
-          });
         };
-
-        watch(currentTab, () => {
-          refreshIcons();
-          if (currentTab.value === 'schedule') initSortable();
-        });
 
         const openGoogleMap = (query) => {
           if (!query) return;
@@ -1542,14 +1532,12 @@
             };
             showExpenseModal.value = true;
           }
-          refreshIcons();
         };
 
         const openEditModal = (item) => {
           isEditingSchedule.value = true;
           modalScheduleForm.value = JSON.parse(JSON.stringify(item));
           showScheduleModal.value = true;
-          refreshIcons();
         };
 
         const closeScheduleModal = () => {
@@ -1569,7 +1557,6 @@
             items.push({ ...modalScheduleForm.value });
           }
           showScheduleModal.value = false;
-          refreshIcons();
         };
 
         const confirmDeleteScheduleItem = () => {
@@ -1578,11 +1565,9 @@
             const idx = items.findIndex(i => i.id === modalScheduleForm.value.id);
             if (idx !== -1) items.splice(idx, 1);
             showScheduleModal.value = false;
-            refreshIcons();
           }
         };
 
-        // 購物照片上傳 (自動壓縮至 600px，畫質 0.75，兼具畫質與輕量)
         const handleImageUpload = (e) => {
           const file = e.target.files[0];
           if (!file) return;
@@ -1599,7 +1584,6 @@
             ...shoppingForm.value
           });
           showShoppingModal.value = false;
-          refreshIcons();
         };
 
         const deleteShoppingItem = (idx) => {
@@ -1615,7 +1599,6 @@
             ...expenseForm.value
           });
           showExpenseModal.value = false;
-          refreshIcons();
         };
 
         const deleteExpense = (idx) => {
@@ -1639,20 +1622,18 @@
           switch (cat) {
             case '交通': return 'train';
             case '飲食': return 'coffee';
-            case '住宿': return 'home';
+            case '住宿': return 'bed';
             case '門票': return 'ticket';
             case '購物': return 'shopping-bag';
-            default: return 'tag';
+            default: return 'badge-dollar-sign';
           }
         };
 
         onMounted(() => {
-          refreshIcons();
-          initSortable();
           setTimeout(() => {
             fetchLiveRates();
             fetchLiveWeather(currentDay.value.location);
-          }, 250);
+          }, 400);
         });
 
         return {
@@ -1704,7 +1685,10 @@
           openGoogleMap
         };
       }
-    }).mount('#app');
+    });
+
+    app.component('app-icon', AppIcon);
+    app.mount('#app');
   </script>
 </body>
 </html>
