@@ -12,6 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="dns-prefetch" href="https://open.er-api.com">
+  <link rel="dns-prefetch" href="https://api.open-meteo.com">
 
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -111,20 +112,39 @@
           </button>
         </div>
 
-        <!-- 每日天氣資訊 -->
-        <div class="bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-3.5 mb-4 mt-2 flex items-center justify-between shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-zurich-50 flex items-center justify-center text-zurich-600">
-              <i :data-lucide="currentDayWeather.icon" class="w-6 h-6"></i>
+        <!-- 每日天氣資訊 (含即時手動更新按鈕與聯網更新功能) -->
+        <div class="bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-3.5 mb-4 mt-2 shadow-sm">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100/80">
+            <div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-zurich-600"></i>
+              <span>{{ currentDay.location }} 天氣預報</span>
             </div>
-            <div>
-              <div class="text-xs font-medium text-slate-400">{{ currentDay.location }} 天氣預測</div>
-              <div class="text-sm font-semibold text-slate-700">{{ currentDayWeather.summary }}</div>
-            </div>
+            
+            <!-- 天氣即時更新按鈕 -->
+            <button 
+              @click="fetchLiveWeather(currentDay.location)" 
+              :disabled="isWeatherLoading"
+              class="text-[11px] text-zurich-600 hover:text-zurich-800 font-semibold flex items-center gap-1 transition disabled:opacity-50"
+            >
+              <i data-lucide="refresh-cw" :class="isWeatherLoading ? 'animate-spin' : ''" class="w-3 h-3"></i>
+              <span>{{ isWeatherLoading ? '更新中' : '即時更新' }}</span>
+            </button>
           </div>
-          <div class="text-right">
-            <div class="text-lg font-bold text-zurich-800">{{ currentDayWeather.temp }}°C</div>
-            <div class="text-[11px] text-slate-400">體感 {{ currentDayWeather.feelsLike }}°C</div>
+
+          <div class="flex items-center justify-between pt-2.5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-zurich-50 flex items-center justify-center text-zurich-600">
+                <i :data-lucide="currentDayWeather.icon" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <div class="text-sm font-bold text-slate-700">{{ currentDayWeather.summary }}</div>
+                <div class="text-[10px] text-slate-400">更新時間：{{ weatherLastUpdated }}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xl font-extrabold text-zurich-800">{{ currentDayWeather.temp }}°C</div>
+              <div class="text-[11px] text-slate-400">體感 {{ currentDayWeather.feelsLike }}°C</div>
+            </div>
           </div>
         </div>
 
@@ -303,7 +323,7 @@
           </div>
         </div>
 
-        <!-- 航班資訊 (去程已更正為 TPE ➔ CDG) -->
+        <!-- 航班資訊 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center gap-2 mb-3">
             <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
@@ -661,7 +681,6 @@
           { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
         ];
 
-        // 9/12 已正式修正為 TPE ➔ CDG
         const defaultItinerary = [
           {
             dateStr: '2026-09-12',
@@ -1134,10 +1153,9 @@
           }
         ];
 
-        // 升級版本 key 為 v5，強制淘汰載入手機舊快取
         let savedItinerary = null;
         try {
-          const raw = localStorage.getItem('my_itinerary_v5');
+          const raw = localStorage.getItem('my_itinerary_v6');
           if (raw) savedItinerary = JSON.parse(raw);
         } catch(e) {}
 
@@ -1147,7 +1165,26 @@
           { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
 
-        const weatherCityMap = {
+        // 各地點經緯度座標配置 (供即時氣象 API 查詢)
+        const cityCoordMap = {
+          '台北 ➔ 巴黎': { lat: 25.03, lon: 121.56, defName: '台北' },
+          '蘇黎世': { lat: 47.37, lon: 8.54, defName: '蘇黎世' },
+          '琉森 / 瑞吉山': { lat: 47.05, lon: 8.30, defName: '琉森' },
+          '伯恩 ➔ 茵特拉肯': { lat: 46.94, lon: 7.44, defName: '伯恩' },
+          '歐洲之巔：少女峰': { lat: 46.58, lon: 7.96, defName: '少女峰' },
+          '瀑布鎮 / 圖恩湖': { lat: 46.60, lon: 7.90, defName: '瀑布鎮' },
+          '黃金列車 ➔ 日內瓦': { lat: 46.43, lon: 6.91, defName: '蒙特勒' },
+          '日內瓦市區': { lat: 46.20, lon: 6.14, defName: '日內瓦' },
+          '西庸城堡 / 拉沃葡萄園': { lat: 46.49, lon: 6.74, defName: '拉沃' },
+          '日內瓦 ➔ 巴黎': { lat: 48.85, lon: 2.35, defName: '巴黎' },
+          '巴黎經典與塞納河': { lat: 48.85, lon: 2.35, defName: '巴黎' },
+          '巴黎藝術與蒙馬特': { lat: 48.85, lon: 2.35, defName: '巴黎' },
+          '巴黎退房與啟程': { lat: 49.00, lon: 2.55, defName: '巴黎戴高樂' },
+          '返台航班': { lat: 49.00, lon: 2.55, defName: '巴黎戴高樂' }
+        };
+
+        // 預設氣候靜態資料
+        const defaultWeatherMap = {
           '台北 ➔ 巴黎': { icon: 'cloud-sun', summary: '出發啟程 · 舒適', temp: 28, feelsLike: 29 },
           '蘇黎世': { icon: 'cloud-sun', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
           '琉森 / 瑞吉山': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
@@ -1161,17 +1198,74 @@
           '巴黎經典與塞納河': { icon: 'cloud-sun', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 },
           '巴黎藝術與蒙馬特': { icon: 'sun', summary: '陽光普照', temp: 21, feelsLike: 21 },
           '巴黎退房與啟程': { icon: 'cloud-sun', summary: '微涼晨光', temp: 17, feelsLike: 16 },
+          '返台航班': { icon: 'cloud-sun', summary: '晴朗舒適', temp: 18, feelsLike: 18 }
         };
+
+        // 即時氣候狀態
+        const isWeatherLoading = ref(false);
+        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v6')) || defaultWeatherMap);
+        const weatherLastUpdated = ref(localStorage.getItem('weather_last_updated') || '尚未更新');
 
         const currentDay = computed(() => {
           return itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0] || { items: [] };
         });
 
         const currentDayWeather = computed(() => {
-          const loc = currentDay.value?.location || '台北 ➔ 巴黎';
-          return weatherCityMap[loc] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 };
+          const loc = currentDay.value?.location || '蘇黎世';
+          return liveWeatherData.value[loc] || defaultWeatherMap[loc] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 };
         });
 
+        // WMO 天氣代碼轉換為中文與 Lucide 圖示
+        const parseWmoCode = (code) => {
+          if (code === 0) return { icon: 'sun', summary: '晴朗無雲' };
+          if ([1, 2].includes(code)) return { icon: 'cloud-sun', summary: '晴時多雲' };
+          if (code === 3) return { icon: 'cloud', summary: '陰天多雲' };
+          if ([45, 48].includes(code)) return { icon: 'cloud-fog', summary: '晨霧起霧' };
+          if ([51, 53, 55, 61, 63].includes(code)) return { icon: 'cloud-rain', summary: '局部短暫陣雨' };
+          if ([65, 80, 81, 82].includes(code)) return { icon: 'cloud-rain', summary: '持續降雨' };
+          if ([71, 73, 75, 77, 85, 86].includes(code)) return { icon: 'snowflake', summary: '飄雪結冰' };
+          if ([95, 96, 99].includes(code)) return { icon: 'cloud-lightning', summary: '雷雨天氣' };
+          return { icon: 'cloud-sun', summary: '多雲天氣' };
+        };
+
+        // 即時抓取真實氣象 API 函式 (Open-Meteo 免費無限制)
+        const fetchLiveWeather = async (targetLocation) => {
+          const loc = targetLocation || currentDay.value?.location || '蘇黎世';
+          const coord = cityCoordMap[loc] || { lat: 47.37, lon: 8.54 };
+
+          isWeatherLoading.value = true;
+          try {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${coord.lat}&longitude=${coord.lon}&current=temperature_2m,apparent_temperature,weather_code&timezone=auto`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (data && data.current) {
+              const current = data.current;
+              const parsed = parseWmoCode(current.weather_code);
+              
+              liveWeatherData.value[loc] = {
+                icon: parsed.icon,
+                summary: parsed.summary,
+                temp: Math.round(current.temperature_2m),
+                feelsLike: Math.round(current.apparent_temperature)
+              };
+
+              const now = new Date();
+              const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              weatherLastUpdated.value = timeStr;
+
+              localStorage.setItem('cached_weather_v6', JSON.stringify(liveWeatherData.value));
+              localStorage.setItem('weather_last_updated', timeStr);
+            }
+          } catch (err) {
+            console.warn('天氣 API 連線失敗，保持本地暫存資料', err);
+          } finally {
+            isWeatherLoading.value = false;
+            refreshIcons();
+          }
+        };
+
+        // 即時匯率系統
         const exchangeCurrency = ref('CHF');
         const inputForeignAmount = ref(100);
         const isRateLoading = ref(false);
@@ -1213,7 +1307,6 @@
           }
         };
 
-        // 資訊頁航班明細：去程修正為 TPE ➔ CDG
         const flightDetails = [
           { type: '去程 (台北➔巴黎)', code: 'BR087', date: '2026/09/12', from: 'TPE', depTime: '23:30', to: 'CDG', arrTime: '07:35 (+1)', duration: '14h 05m' },
           { type: '瑞士 (巴黎➔蘇黎世)', code: 'AF1614', date: '2026/09/13', from: 'CDG', depTime: '12:40', to: 'ZRH', arrTime: '13:55', duration: '1h 15m' },
@@ -1232,7 +1325,7 @@
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v5', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v6', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
 
@@ -1276,6 +1369,8 @@
           nextTick(() => {
             refreshIcons();
             initSortable();
+            // 切換日期時，在背景自動抓取當前新城市的天氣
+            fetchLiveWeather(currentDay.value.location);
           });
         };
 
@@ -1446,6 +1541,7 @@
           initSortable();
           setTimeout(() => {
             fetchLiveRates();
+            fetchLiveWeather(currentDay.value.location);
           }, 250);
         });
 
@@ -1456,6 +1552,9 @@
           itineraryDays,
           currentDay,
           currentDayWeather,
+          isWeatherLoading,
+          weatherLastUpdated,
+          fetchLiveWeather,
           flightDetails,
           hotelList,
           shoppingList,
