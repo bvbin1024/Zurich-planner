@@ -3,14 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Swiss Voyage 2026 | 瑞士之旅</title>
+  <title>Swiss & Paris Journey 2026</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Vue 3 CDN -->
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SortableJS (for Drag & Drop) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <script>
     tailwind.config = {
@@ -18,457 +24,484 @@
         extend: {
           colors: {
             zurich: {
-              50: '#f0f7fc',
-              100: '#e0eff9',
-              200: '#b9ddf2',
-              500: '#2b79c2',
-              600: '#1d5e9b',
-              800: '#123963',
-              900: '#0b233e'
+              50: '#F0F5FA',
+              100: '#E1EDF5',
+              200: '#C2DBEC',
+              500: '#2A6F97',
+              600: '#014F86',
+              700: '#013A63',
+              800: '#012A4A',
             },
             nordic: {
               bg: '#F8FAFC',
               card: '#FFFFFF',
-              text: '#1E293B',
-              muted: '#64748B',
+              subtle: '#94A3B8',
+              dark: '#0F172A',
               border: '#E2E8F0'
             }
           },
           fontFamily: {
-            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif']
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
           }
         }
       }
     }
   </script>
-
   <style>
-    /* 隱藏原生卷軸但保有滑動能力 (App 體驗) */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    body {
-      background-color: #0b233e;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
-    .card-glass {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-    }
+    body { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
-<body class="flex justify-center min-h-screen">
 
-  <!-- 手機外框容器 (Max-W-md 模擬原生手機介面) -->
-  <div id="app" class="w-full max-w-md bg-nordic-bg min-h-screen relative flex flex-col shadow-2xl overflow-hidden pb-24">
+<body class="bg-slate-100 flex justify-center min-h-screen text-slate-800 font-sans antialiased">
 
-    <!-- 頁首 Header 區塊 (附帶蘇黎世湖畔景緻背景與浮動 Tab ICON) -->
-    <header class="relative h-56 w-full overflow-hidden bg-zurich-900 flex flex-col justify-between p-5 text-white">
-      <img src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=800&q=80" 
-           alt="Zurich Cover" class="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay" />
-      <div class="absolute inset-0 bg-gradient-to-t from-nordic-bg via-transparent to-black/40"></div>
+  <div id="app" class="w-full max-w-[480px] min-h-screen bg-nordic-bg shadow-2xl relative pb-28 flex flex-col">
 
-      <!-- 頂部標題 -->
-      <div class="relative z-10 flex justify-between items-start pt-2">
-        <div>
-          <span class="text-xs uppercase tracking-widest text-zurich-200 font-semibold">SWITZERLAND 2026</span>
-          <h1 class="text-2xl font-bold tracking-tight">瑞士湖光山色紀行</h1>
-        </div>
-        <span class="text-xs bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-white/90 border border-white/20">
-          9/13 - 9/21
-        </span>
+    <!-- 頂部 Hero 圖片與浮動 Tab Bar -->
+    <header class="relative h-56 w-full overflow-hidden bg-zurich-800 flex-shrink-0">
+      <img 
+        src="https://images.unsplash.com/photo-1515488764276-beab7607c1e6?auto=format&fit=crop&w=1000&q=80" 
+        alt="Zurich & Alps" 
+        class="w-full h-full object-cover opacity-75"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-zurich-800/90 via-zurich-800/30 to-transparent"></div>
+      
+      <div class="absolute top-6 left-6 right-6 text-white">
+        <span class="text-xs uppercase tracking-widest text-zurich-200 font-semibold">Travel Guide</span>
+        <h1 class="text-2xl font-bold tracking-tight mt-0.5">Swiss & Paris 2026</h1>
       </div>
 
-      <!-- 浮在封面圖右下角的分頁 Tab 按鈕 (符合設計需求) -->
-      <div class="relative z-10 flex justify-end gap-2 pb-1">
-        <div class="card-glass border border-white/40 rounded-2xl p-1.5 shadow-lg flex gap-2">
-          <!-- 每日行程 -->
-          <button @click="currentTab = 'itinerary'" 
-                  :class="currentTab === 'itinerary' ? 'bg-zurich-600 text-white shadow-md' : 'text-slate-600 hover:text-zurich-600'" 
-                  class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300">
-            <i class="fa-solid fa-location-dot text-base"></i>
-          </button>
-          <!-- 資訊 -->
-          <button @click="currentTab = 'info'" 
-                  :class="currentTab === 'info' ? 'bg-zurich-600 text-white shadow-md' : 'text-slate-600 hover:text-zurich-600'" 
-                  class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300">
-            <i class="fa-solid fa-circle-info text-base"></i>
-          </button>
-          <!-- 購物清單 -->
-          <button @click="currentTab = 'shopping'" 
-                  :class="currentTab === 'shopping' ? 'bg-zurich-600 text-white shadow-md' : 'text-slate-600 hover:text-zurich-600'" 
-                  class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300">
-            <i class="fa-solid fa-basket-shopping text-base"></i>
-          </button>
-          <!-- 花費 -->
-          <button @click="currentTab = 'expenses'" 
-                  :class="currentTab === 'expenses' ? 'bg-zurich-600 text-white shadow-md' : 'text-slate-600 hover:text-zurich-600'" 
-                  class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300">
-            <i class="fa-solid fa-coins text-base"></i>
-          </button>
-        </div>
-      </div>
+      <!-- 浮動於圖片右下方的 ICON Tab Bar -->
+      <nav class="absolute bottom-3 right-4 bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-white/40 flex items-center gap-2">
+        <button 
+          v-for="tab in tabs" 
+          :key="tab.id"
+          @click="currentTab = tab.id"
+          :class="currentTab === tab.id ? 'bg-zurich-600 text-white shadow-md' : 'text-slate-500 hover:text-zurich-700'"
+          class="p-2.5 rounded-full transition-all duration-300 flex items-center justify-center relative"
+          :title="tab.name"
+        >
+          <i :data-lucide="tab.icon" class="w-5 h-5"></i>
+        </button>
+      </nav>
     </header>
 
-    <!-- 主體內容區塊 -->
-    <main class="flex-1 px-4 -mt-2 z-10">
+    <!-- 主內容區域 -->
+    <main class="flex-1 px-4 pt-4">
 
       <!-- ================= 1. 每日行程表 ================= -->
-      <section v-if="currentTab === 'itinerary'" class="space-y-4">
-        
-        <!-- (1) 橫向滑動日期選單 (星期在上方且字體較大，日期在下方) -->
-        <div class="flex gap-2.5 overflow-x-auto no-scrollbar py-2 -mx-4 px-4">
-          <div v-for="(day, idx) in days" :key="idx"
-               @click="selectedDayIdx = idx"
-               :class="selectedDayIdx === idx ? 'bg-zurich-600 text-white shadow-lg shadow-zurich-500/30 scale-105' : 'bg-white text-slate-600 border border-slate-200'"
-               class="flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200">
-            <span class="text-sm font-black uppercase tracking-wider">{{ day.weekday }}</span>
-            <span class="text-xs font-semibold opacity-90">{{ day.dateDisplay }}</span>
-          </div>
+      <section v-show="currentTab === 'schedule'">
+        <div class="flex gap-2.5 overflow-x-auto no-scrollbar pb-3 pt-1">
+          <button 
+            v-for="(day, index) in itineraryDays" 
+            :key="day.dateStr"
+            @click="selectedDateIndex = index"
+            :class="selectedDateIndex === index 
+              ? 'bg-zurich-700 text-white shadow-md scale-105' 
+              : 'bg-white text-slate-600 border border-slate-200/80'"
+            class="flex-shrink-0 flex flex-col items-center justify-center w-[58px] h-[68px] rounded-2xl transition-all duration-200"
+          >
+            <span class="text-xs font-bold tracking-wide uppercase">{{ day.weekday }}</span>
+            <span class="text-lg font-semibold leading-none mt-1">{{ day.dayNumber }}</span>
+          </button>
         </div>
 
-        <!-- (10) 天氣資訊卡片 (顯示在每日行程頂部) -->
-        <div class="bg-gradient-to-r from-zurich-50 to-blue-50/80 border border-zurich-100 rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
+        <!-- 每日天氣資訊 -->
+        <div class="bg-white/80 backdrop-blur-sm border border-slate-200/80 rounded-2xl p-3.5 mb-4 mt-2 flex items-center justify-between shadow-sm">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-zurich-500 shadow-sm text-xl">
-              <i :class="currentWeather.icon"></i>
+            <div class="w-10 h-10 rounded-xl bg-zurich-50 flex items-center justify-center text-zurich-600">
+              <i :data-lucide="currentDayWeather.icon" class="w-6 h-6"></i>
             </div>
             <div>
-              <div class="text-xs font-semibold text-slate-500">{{ currentDay.location }} · {{ currentWeather.text }}</div>
-              <div class="text-base font-bold text-slate-800">{{ currentWeather.temp }}°C <span class="text-xs font-normal text-slate-500">體感 {{ currentWeather.feelLike }}°C</span></div>
+              <div class="text-xs font-medium text-slate-400">{{ currentDay.location }} 天氣預測</div>
+              <div class="text-sm font-semibold text-slate-700">{{ currentDayWeather.summary }}</div>
             </div>
           </div>
-          <span class="text-[11px] bg-white px-2 py-1 rounded-md text-zurich-600 border border-zurich-200 font-medium">即時天氣</span>
+          <div class="text-right">
+            <div class="text-lg font-bold text-zurich-800">{{ currentDayWeather.temp }}°C</div>
+            <div class="text-[11px] text-slate-400">體感 {{ currentDayWeather.feelsLike }}°C</div>
+          </div>
         </div>
 
-        <!-- 每日行程列表 (支援拖曳重排) -->
-        <div class="space-y-3">
-          <div v-for="(item, index) in currentDay.items" :key="item.id"
-               draggable="true"
-               @dragstart="onDragStart(index)"
-               @dragover.prevent
-               @drop="onDrop(index)"
-               class="transition-transform duration-150">
+        <!-- 住宿資訊小卡 -->
+        <div v-if="currentDay.hotel" class="mb-4 bg-zurich-50/70 border border-zurich-100 rounded-xl p-3 flex items-center justify-between">
+          <div class="flex items-center gap-2.5 text-xs text-zurich-800 font-medium">
+            <i data-lucide="bed" class="w-4 h-4 text-zurich-600 flex-shrink-0"></i>
+            <span class="truncate">今晚住宿：{{ currentDay.hotel.name }}</span>
+          </div>
+          <button @click="openGoogleMap(currentDay.hotel.address)" class="text-xs text-zurich-600 font-semibold flex items-center gap-0.5 underline shrink-0">
+            導航
+          </button>
+        </div>
 
-            <!-- (6)(7) 行程間交通時間指示 (若是首項則計算前一晚飯店至此) -->
-            <div class="flex items-center justify-center gap-2 my-2.5 text-xs text-slate-400">
+        <!-- 行程卡片清單 -->
+        <div id="schedule-list" class="space-y-3">
+          <template v-for="(item, idx) in currentDay.items" :key="item.id">
+            
+            <div v-if="idx > 0" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
               <div class="h-px bg-slate-200 flex-1"></div>
-              <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-slate-600 border border-slate-200">
-                <i :class="getTransitIcon(item.transitMode)"></i>
-                <span class="font-medium">{{ index === 0 ? '自前宿出發約 ' : '距前點約 ' }}{{ item.transitTime || '15' }} 分鐘</span>
+              <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-600">
+                <i :data-lucide="item.transitModeIcon || 'bus'" class="w-3.5 h-3.5 text-zurich-600"></i>
+                <span>交通約 {{ item.transitTime || '20 分鐘' }}</span>
               </div>
               <div class="h-px bg-slate-200 flex-1"></div>
             </div>
 
-            <!-- (8) 第一天第一個行程若為航班資訊：專屬卡片樣式 -->
-            <div v-if="item.category === '航班'" 
-                 class="bg-gradient-to-br from-zurich-800 to-zurich-900 text-white rounded-2xl p-4 shadow-md relative overflow-hidden">
-              <i class="fa-solid fa-plane-departure absolute -bottom-3 -right-3 text-7xl text-white/10"></i>
-              <div class="flex justify-between items-start mb-2">
-                <span class="px-2 py-0.5 rounded-full bg-white/20 text-xs font-medium">{{ item.flightNo }}</span>
-                <span class="text-xs text-zurich-200">{{ item.duration }}</span>
+            <div v-else-if="idx === 0 && currentDay.fromPrevHotelTransit" class="flex items-center justify-center gap-3 py-1 text-slate-400 text-xs">
+              <div class="h-px bg-slate-200 flex-1"></div>
+              <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 text-slate-600">
+                <i data-lucide="footprints" class="w-3.5 h-3.5 text-zurich-600"></i>
+                <span>從飯店出發：{{ currentDay.fromPrevHotelTransit }}</span>
+              </div>
+              <div class="h-px bg-slate-200 flex-1"></div>
+            </div>
+
+            <!-- 航班專用特殊卡片 -->
+            <div 
+              v-if="item.category === '航班'" 
+              class="bg-gradient-to-br from-zurich-700 to-zurich-800 text-white rounded-2xl p-4 shadow-md relative cursor-grab active:cursor-grabbing border border-zurich-600"
+              :data-id="item.id"
+            >
+              <div class="flex justify-between items-center text-xs text-zurich-200 pb-2 border-b border-white/10">
+                <span class="font-bold tracking-wider">{{ item.flightCode || 'FLIGHT' }}</span>
+                <span class="bg-zurich-600 px-2 py-0.5 rounded text-[10px]">{{ item.date || '航班' }}</span>
               </div>
               <div class="flex justify-between items-center my-3">
-                <div class="text-left">
-                  <div class="text-2xl font-black tracking-wide">{{ item.depAirport }}</div>
-                  <div class="text-xs text-slate-300">{{ item.depTime }}</div>
+                <div>
+                  <div class="text-2xl font-extrabold">{{ item.depAirport || 'CDG' }}</div>
+                  <div class="text-xs text-zurich-200">{{ item.depTime || '23:30' }}</div>
                 </div>
-                <i class="fa-solid fa-arrow-right-long text-zurich-200 text-lg"></i>
+                <div class="flex-1 flex flex-col items-center px-4">
+                  <span class="text-[10px] text-zurich-200">{{ item.duration || '直飛' }}</span>
+                  <div class="w-full flex items-center my-1">
+                    <div class="h-0.5 w-full bg-zurich-200/40"></div>
+                    <i data-lucide="plane" class="w-4 h-4 text-white mx-1 transform rotate-90"></i>
+                    <div class="h-0.5 w-full bg-zurich-200/40"></div>
+                  </div>
+                  <span class="text-[10px] text-zurich-200 font-mono">{{ item.airline || 'Flight' }}</span>
+                </div>
                 <div class="text-right">
-                  <div class="text-2xl font-black tracking-wide">{{ item.arrAirport }}</div>
-                  <div class="text-xs text-slate-300">{{ item.arrTime }}</div>
+                  <div class="text-2xl font-extrabold">{{ item.arrAirport || 'TPE' }}</div>
+                  <div class="text-xs text-zurich-200">{{ item.arrTime || '--:--' }}</div>
                 </div>
               </div>
-              <div class="flex justify-between items-center pt-2 border-t border-white/15 text-xs text-slate-300">
-                <span>{{ item.title }}</span>
-                <div class="flex gap-2">
-                  <button @click.stop="openGoogleMap(item.title)" class="text-zurich-200 hover:text-white underline text-[11px]"><i class="fa-solid fa-diamond-turn-right mr-1"></i>導航</button>
-                  <button @click.stop="editItinerary(item)" class="text-white hover:text-zurich-200"><i class="fa-solid fa-pen"></i></button>
-                </div>
+              <div class="text-xs text-zurich-100/90 pt-1 border-t border-white/10 flex justify-between items-center">
+                <span>備註：{{ item.notes || '請提早3小時抵達機場' }}</span>
+                <button @click="openEditModal(item)" class="text-xs underline text-zurich-200">編輯</button>
               </div>
             </div>
 
-            <!-- (3) 一般行程卡片樣式 -->
-            <div v-else 
-                 @click="openGoogleMap(item.title)"
-                 class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:scale-[0.99] transition-all cursor-pointer hover:border-zurich-200 relative group">
-              
-              <!-- 頂部類別標籤與操作按鈕 -->
-              <div class="flex justify-between items-start mb-1.5">
+            <!-- 一般行程卡片 -->
+            <div 
+              v-else 
+              class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:border-zurich-200 transition-all cursor-grab active:cursor-grabbing relative"
+              :data-id="item.id"
+            >
+              <div class="flex items-start justify-between">
                 <div class="flex items-center gap-2">
-                  <span :class="getCategoryBadge(item.category)" class="text-[11px] font-semibold px-2 py-0.5 rounded-md">
+                  <span :class="categoryBadgeColor(item.category)" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
                     {{ item.category }}
                   </span>
-                  <span class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-clock text-[10px] mr-1"></i>{{ item.openHours || '全天開放' }}</span>
+                  <h3 class="font-bold text-slate-800 text-base leading-snug">{{ item.name }}</h3>
                 </div>
-                <div class="flex items-center gap-2">
-                  <button @click.stop="editItinerary(item)" class="text-slate-400 hover:text-zurich-600 p-1">
-                    <i class="fa-solid fa-pen text-xs"></i>
+                <div class="flex items-center gap-1.5">
+                  <button @click.stop="openEditModal(item)" class="text-slate-300 hover:text-slate-600 p-1">
+                    <i data-lucide="pencil" class="w-4 h-4"></i>
                   </button>
-                  <span class="text-slate-300 cursor-grab"><i class="fa-solid fa-grip-vertical text-xs"></i></span>
                 </div>
               </div>
 
-              <!-- 行程名稱 -->
-              <div class="text-base font-bold text-slate-800 flex items-center justify-between">
-                <span>{{ item.title }}</span>
-                <span class="text-xs text-zurich-600 font-normal flex items-center">
-                  <i class="fa-solid fa-location-arrow mr-1"></i>導航
-                </span>
+              <div class="mt-2.5 space-y-1 text-xs text-slate-500">
+                <div v-if="item.hours" class="flex items-center gap-1.5">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>營業時間：{{ item.hours }}</span>
+                </div>
+                <div v-if="item.category === '景點' && item.ticket" class="flex items-center gap-1.5">
+                  <i data-lucide="ticket" class="w-3.5 h-3.5 text-slate-400"></i>
+                  <span>門票：{{ item.ticket }}</span>
+                </div>
               </div>
 
-              <!-- 門票資訊 (若有) -->
-              <div v-if="item.ticket" class="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded-md my-1.5 inline-block font-medium">
-                <i class="fa-solid fa-ticket mr-1"></i>門票：{{ item.ticket }}
+              <div v-if="item.notes" class="mt-2 bg-slate-50 p-2 rounded-xl text-xs text-slate-600 leading-relaxed">
+                {{ item.notes }}
               </div>
 
-              <!-- 特色與備註 -->
-              <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{{ item.notes }}</p>
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex justify-end">
+                <button 
+                  @click.stop="openGoogleMap(item.address || item.name)"
+                  class="flex items-center gap-1.5 text-xs font-semibold text-zurich-600 hover:text-zurich-800 transition"
+                >
+                  <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i>
+                  <span>Google Maps 導航</span>
+                </button>
+              </div>
             </div>
 
-          </div>
+          </template>
         </div>
-
-        <!-- 每日行程無項目時 -->
-        <div v-if="currentDay.items.length === 0" class="text-center py-12 text-slate-400">
-          <i class="fa-regular fa-calendar-plus text-4xl mb-2"></i>
-          <p class="text-sm">本日尚無行程，點擊右下角「+」加入</p>
-        </div>
-
       </section>
 
-      <!-- ================= 2. 資訊頁面 ================= -->
-      <section v-if="currentTab === 'info'" class="space-y-4">
+
+      <!-- ================= 2. 資訊頁 (i) ================= -->
+      <section v-show="currentTab === 'info'" class="space-y-4">
         
-        <!-- (4) 即時匯率換算 (外幣換算回台幣) -->
+        <!-- 即時匯率換算 (串接國際即時 API) -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-calculator text-zurich-500"></i> 即時匯率換算
-            </h3>
-            <span class="text-[11px] text-slate-400">參考匯率 1 CHF ≈ {{ exchangeRate }} TWD</span>
-          </div>
-          <div class="grid grid-cols-2 gap-3 mt-2">
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">外幣 (CHF 瑞郎)</label>
-              <div class="relative">
-                <input v-model.number="calcChf" type="number" step="any" placeholder="0"
-                       class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-zurich-500" />
-                <span class="absolute right-3 top-2 text-xs font-semibold text-slate-400">CHF</span>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
+                <i data-lucide="calculator" class="w-4 h-4"></i>
               </div>
+              <h2 class="text-sm font-bold text-slate-800">匯率即時換算 (➔ 新台幣 TWD)</h2>
             </div>
-            <div>
-              <label class="text-[11px] text-slate-500 block mb-1">折合新台幣 (TWD)</label>
-              <div class="relative">
-                <input :value="(calcChf * exchangeRate).toFixed(1)" readonly
-                       class="w-full bg-zurich-50 border border-zurich-100 rounded-xl px-3 py-2 text-sm font-bold text-zurich-800 focus:outline-none" />
-                <span class="absolute right-3 top-2 text-xs font-semibold text-zurich-500">NT$</span>
-              </div>
+
+            <!-- 手動重整與狀態指示 -->
+            <button 
+              @click="fetchLiveRates" 
+              :disabled="isRateLoading"
+              class="text-xs text-zurich-600 flex items-center gap-1 hover:text-zurich-800 transition disabled:opacity-50"
+            >
+              <i data-lucide="refresh-cw" :class="isRateLoading ? 'animate-spin' : ''" class="w-3.5 h-3.5"></i>
+              <span>{{ isRateLoading ? '更新中' : '即時更新' }}</span>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <button 
+              v-for="curr in ['CHF', 'EUR', 'USD']" 
+              :key="curr"
+              @click="exchangeCurrency = curr"
+              :class="exchangeCurrency === curr ? 'bg-zurich-600 text-white font-bold' : 'bg-slate-100 text-slate-600'"
+              class="py-1.5 text-xs rounded-xl transition"
+            >
+              {{ curr }}
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <div class="relative">
+              <input 
+                v-model.number="inputForeignAmount" 
+                type="number" 
+                placeholder="輸入外幣金額" 
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-zurich-500 font-semibold"
+              />
+              <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">{{ exchangeCurrency }}</span>
+            </div>
+            <div class="p-3 bg-zurich-50 rounded-xl flex items-center justify-between">
+              <span class="text-xs text-slate-500">換算約合台幣</span>
+              <span class="text-base font-extrabold text-zurich-700">NT$ {{ convertedTWD.toLocaleString() }}</span>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 px-1">
+              <span>更新時間：{{ lastUpdatedTime }}</span>
+              <span>1 {{ exchangeCurrency }} ≈ {{ currentRates[exchangeCurrency] }} TWD</span>
             </div>
           </div>
         </div>
 
-        <!-- (1) 航班資訊 -->
+        <!-- 航班資訊 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-            <i class="fa-solid fa-plane text-zurich-500"></i> 航班資訊
-          </h3>
-          <div class="space-y-3">
-            <div v-for="fl in flightList" :key="fl.code" class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-              <div class="flex justify-between items-center text-xs font-bold text-zurich-800 mb-1">
-                <span>{{ fl.type }} · {{ fl.code }}</span>
-                <span class="text-slate-500 font-normal">{{ fl.date }}</span>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
+              <i data-lucide="plane" class="w-4 h-4"></i>
+            </div>
+            <h2 class="text-sm font-bold text-slate-800">航班明細表 (去程 / 轉機 / 回程)</h2>
+          </div>
+
+          <div class="space-y-2.5">
+            <div v-for="flight in flightDetails" :key="flight.code + flight.date" class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-zurich-700">{{ flight.type }} · {{ flight.code }}</span>
+                <span class="text-slate-400">{{ flight.date }}</span>
               </div>
-              <div class="flex justify-between items-center my-1.5 text-slate-700">
-                <span class="font-extrabold text-base">{{ fl.dep }}</span>
-                <div class="flex flex-col items-center">
-                  <span class="text-[10px] text-slate-400">{{ fl.duration }}</span>
-                  <i class="fa-solid fa-plane text-xs text-zurich-500"></i>
+              <div class="flex items-center justify-between mt-2">
+                <div>
+                  <div class="font-extrabold text-sm text-slate-800">{{ flight.from }}</div>
+                  <div class="text-[11px] text-slate-400">{{ flight.depTime }}</div>
                 </div>
-                <span class="font-extrabold text-base">{{ fl.arr }}</span>
-              </div>
-              <div class="flex justify-between text-[11px] text-slate-500">
-                <span>起飛 {{ fl.depTime }}</span>
-                <span>抵達 {{ fl.arrTime }}</span>
+                <div class="text-center text-[10px] text-slate-400">
+                  <span>{{ flight.duration }}</span>
+                  <div class="w-16 h-px bg-slate-300 my-0.5"></div>
+                </div>
+                <div class="text-right">
+                  <div class="font-extrabold text-sm text-slate-800">{{ flight.to }}</div>
+                  <div class="text-[11px] text-slate-400">{{ flight.arrTime }}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- (2) 住宿資訊 -->
+        <!-- 住宿資訊 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-            <i class="fa-solid fa-hotel text-zurich-500"></i> 住宿資訊
-          </h3>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-1.5 rounded-lg bg-zurich-50 text-zurich-600">
+              <i data-lucide="home" class="w-4 h-4"></i>
+            </div>
+            <h2 class="text-sm font-bold text-slate-800">住宿資訊</h2>
+          </div>
+
           <div class="space-y-3">
-            <div v-for="hotel in hotels" :key="hotel.name" class="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
-              <div class="flex justify-between items-start">
-                <h4 class="text-xs font-bold text-slate-800">{{ hotel.name }}</h4>
-                <span class="text-[10px] text-zurich-600 bg-zurich-50 px-1.5 py-0.5 rounded font-medium">{{ hotel.period }}</span>
+            <div v-for="hotel in hotelList" :key="hotel.name" class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5 text-xs">
+              <div class="flex justify-between font-bold text-slate-800">
+                <span>{{ hotel.name }}</span>
+                <span class="text-zurich-600 font-semibold">{{ hotel.dates }}</span>
               </div>
-              <p class="text-[11px] text-slate-500 mt-1">{{ hotel.address }}</p>
-              <div class="flex justify-between items-center mt-2.5 pt-2 border-t border-slate-200 text-xs">
-                <span class="text-slate-500 text-[11px]"><i class="fa-solid fa-phone mr-1"></i>{{ hotel.tel }}</span>
-                <button @click="openGoogleMap(hotel.name + ' ' + hotel.address)" 
-                        class="text-zurich-600 hover:text-zurich-800 font-semibold flex items-center gap-1">
-                  <i class="fa-solid fa-location-arrow"></i> 導航路線
+              <p class="text-slate-500 leading-relaxed">{{ hotel.address }}</p>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-slate-400">Tel: {{ hotel.phone }}</span>
+                <button @click="openGoogleMap(hotel.address)" class="font-semibold text-zurich-600 flex items-center gap-1 underline">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Google Maps
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- (3) 租車資訊 -->
+        <!-- 緊急電話與醫療 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h3 class="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-car text-zurich-500"></i> 租車資訊
-          </h3>
-          <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1.5 text-slate-600">
-            <div class="flex justify-between">
-              <span class="font-bold text-slate-800">Sixt Rent a Car (蘇黎世機場店)</span>
-              <span class="text-green-600 font-medium">已預約確認</span>
+          <div class="flex items-center gap-2 mb-3">
+            <div class="p-1.5 rounded-lg bg-rose-50 text-rose-600">
+              <i data-lucide="shield-alert" class="w-4 h-4"></i>
             </div>
-            <p>取車地點：Zurich Airport Operations Center 1, 8058 Zürich</p>
-            <p>取車時間：2026/09/13 14:00</p>
-            <button @click="openGoogleMap('Sixt Rent a Car Zurich Airport')" 
-                    class="mt-2 w-full py-1.5 bg-zurich-600 text-white rounded-lg text-xs font-medium flex items-center justify-center gap-1">
-              <i class="fa-solid fa-diamond-turn-right"></i> 導航至取車處
-            </button>
+            <h2 class="text-sm font-bold text-slate-800">緊急電話與醫療</h2>
           </div>
-        </div>
-
-        <!-- 緊急醫療與救助 -->
-        <div class="bg-red-50/60 rounded-2xl p-4 border border-red-100">
-          <h3 class="text-sm font-bold text-red-800 mb-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-heart-pulse"></i> 瑞士緊急救援
-          </h3>
           <div class="grid grid-cols-2 gap-2 text-xs">
-            <a href="tel:117" class="p-2.5 bg-white rounded-xl flex items-center justify-between border border-red-100 shadow-sm">
-              <span class="font-medium text-slate-700">警察局 (Police)</span>
-              <span class="font-bold text-red-600">117</span>
-            </a>
-            <a href="tel:144" class="p-2.5 bg-white rounded-xl flex items-center justify-between border border-red-100 shadow-sm">
-              <span class="font-medium text-slate-700">救護車 (Ambulance)</span>
-              <span class="font-bold text-red-600">144</span>
-            </a>
-            <a href="tel:1414" class="p-2.5 bg-white rounded-xl flex items-center justify-between border border-red-100 shadow-sm col-span-2">
-              <span class="font-medium text-slate-700">Rega 高山空中救援</span>
-              <span class="font-bold text-red-600">1414</span>
-            </a>
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="font-bold text-slate-700">瑞士 (Switzerland)</div>
+              <div class="mt-1 text-slate-600">通用報案：<a href="tel:112" class="font-bold text-zurich-600">112</a></div>
+              <div class="text-slate-600">醫療救護：<a href="tel:144" class="font-bold text-zurich-600">144</a></div>
+              <div class="text-slate-600">警察報案：<a href="tel:117" class="font-bold text-zurich-600">117</a></div>
+            </div>
+            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+              <div class="font-bold text-slate-700">法國 (France)</div>
+              <div class="mt-1 text-slate-600">歐洲緊急：<a href="tel:112" class="font-bold text-zurich-600">112</a></div>
+              <div class="text-slate-600">救護 (SAMU)：<a href="tel:15" class="font-bold text-zurich-600">15</a></div>
+              <div class="text-slate-600">警察報案：<a href="tel:17" class="font-bold text-zurich-600">17</a></div>
+            </div>
           </div>
         </div>
 
       </section>
 
-      <!-- ================= 3. 購物清單 ================= -->
-      <section v-if="currentTab === 'shopping'" class="space-y-3">
-        <div class="flex justify-between items-center px-1">
-          <h2 class="text-sm font-bold text-slate-800">欲購願望清單 ({{ shoppingList.length }})</h2>
+
+      <!-- ================= 3. 購物清單 (購物籃) ================= -->
+      <section v-show="currentTab === 'shopping'" class="space-y-4">
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-base font-bold text-slate-800">旅行購物清單</h2>
+          <span class="text-xs text-slate-400">共 {{ shoppingList.length }} 項</span>
+        </div>
+
+        <div v-if="shoppingList.length === 0" class="text-center py-16 text-slate-400 text-sm">
+          點擊右下角「+」按鈕新增想買的物品與照片
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <div v-for="(item, idx) in shoppingList" :key="idx" 
-               class="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm flex flex-col justify-between relative group">
-            <div class="w-full h-32 rounded-xl bg-slate-100 overflow-hidden relative mb-2">
+          <div 
+            v-for="(item, sIdx) in shoppingList" 
+            :key="item.id" 
+            class="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 flex flex-col"
+          >
+            <div class="w-full h-32 bg-slate-100 relative overflow-hidden flex items-center justify-center">
               <img v-if="item.image" :src="item.image" class="w-full h-full object-cover" />
-              <div v-else class="w-full h-full flex flex-col items-center justify-center text-slate-300">
-                <i class="fa-solid fa-bag-shopping text-3xl mb-1"></i>
-                <span class="text-[10px]">無相片</span>
+              <div v-else class="flex flex-col items-center text-slate-300">
+                <i data-lucide="image" class="w-8 h-8"></i>
+                <span class="text-[10px] mt-1">無照片</span>
               </div>
-              <button @click="removeShoppingItem(idx)" class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/50 text-white flex items-center justify-center text-xs">
-                <i class="fa-solid fa-xmark"></i>
+              <button @click="deleteShoppingItem(sIdx)" class="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
               </button>
             </div>
-            <div class="px-1">
-              <div class="font-bold text-xs text-slate-800 truncate">{{ item.name }}</div>
-              <div class="text-[10px] text-slate-400 mt-0.5">{{ item.date || '瑞士特產/紀念品' }}</div>
+            <div class="p-3 flex-1 flex flex-col justify-between">
+              <div>
+                <h4 class="font-bold text-slate-800 text-sm truncate">{{ item.name }}</h4>
+                <p v-if="item.notes" class="text-slate-400 text-xs mt-0.5 line-clamp-2">{{ item.notes }}</p>
+              </div>
+              <div class="mt-2 pt-1.5 border-t border-slate-50 flex items-center justify-between text-xs">
+                <label class="flex items-center gap-1.5 text-slate-500 cursor-pointer">
+                  <input type="checkbox" v-model="item.bought" class="rounded text-zurich-600" />
+                  <span :class="item.bought ? 'line-through text-slate-300' : ''">已購買</span>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div v-if="shoppingList.length === 0" class="text-center py-16 text-slate-400">
-          <i class="fa-solid fa-basket-shopping text-4xl mb-2 text-slate-300"></i>
-          <p class="text-xs">清單空空如也，點擊右下角「+」拍下心動好物！</p>
         </div>
       </section>
 
-      <!-- ================= 4. 花費記帳 ================= -->
-      <section v-if="currentTab === 'expenses'" class="space-y-4">
-        <!-- 最上方總花費儀表板 -->
-        <div class="bg-gradient-to-br from-zurich-600 to-zurich-800 rounded-2xl p-4 text-white shadow-md">
-          <span class="text-xs text-zurich-200 font-medium">本次旅行總花費</span>
-          <div class="flex items-baseline gap-2 my-1">
-            <span class="text-3xl font-black tracking-tight">¥ {{ totalExpensesJPY.toLocaleString() }}</span>
-            <span class="text-xs text-zurich-200">(約 NT$ {{ Math.round(totalExpensesJPY * 0.21).toLocaleString() }})</span>
+
+      <!-- ================= 4. 花費記帳 (金錢) ================= -->
+      <section v-show="currentTab === 'expenses'" class="space-y-4">
+        <div class="bg-gradient-to-br from-zurich-800 to-zurich-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
+          <span class="text-xs uppercase font-semibold text-zurich-200">Total Expenses</span>
+          <div class="text-3xl font-extrabold mt-1">
+            ¥ {{ totalExpenseJPY.toLocaleString() }}
           </div>
-          <div class="text-[11px] text-zurich-100 mt-2 flex justify-between border-t border-white/10 pt-2">
-            <span>累積筆數：{{ expenseList.length }} 筆</span>
-            <span>現金 / 信用卡即時紀錄</span>
+          <div class="text-xs text-zurich-200 mt-1">
+            （約合 NT$ {{ Math.round(totalExpenseJPY * 0.22).toLocaleString() }} 元）
           </div>
         </div>
 
-        <!-- 花費明細清單 -->
-        <div class="space-y-2">
-          <div v-for="(exp, idx) in expenseList" :key="idx" 
-               class="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-zurich-50 text-zurich-600 flex items-center justify-center text-sm font-bold">
-                <i :class="getExpenseCategoryIcon(exp.category)"></i>
-              </div>
-              <div>
-                <div class="text-xs font-bold text-slate-800">{{ exp.name }}</div>
-                <div class="text-[10px] text-slate-400 mt-0.5">
-                  {{ exp.date }} · <span class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">{{ exp.payment }}</span> · {{ exp.category }}
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="text-sm font-bold text-slate-800">支出明細列表</h3>
+            <span class="text-xs text-slate-400">最新在最前</span>
+          </div>
+
+          <div v-if="expenses.length === 0" class="text-center py-12 text-slate-400 text-xs">
+            目前尚無花費記錄，請按右下角「+」記帳
+          </div>
+
+          <div class="divide-y divide-slate-100">
+            <div v-for="(exp, eIdx) in expenses" :key="exp.id" class="py-3 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                  <i :data-lucide="expenseCategoryIcon(exp.category)" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <div class="font-bold text-sm text-slate-800">{{ exp.name }}</div>
+                  <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                    <span>{{ exp.date }}</span>
+                    <span>·</span>
+                    <span>{{ exp.paymentMethod }}</span>
+                    <span v-if="exp.notes">· {{ exp.notes }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="text-right">
-              <div class="text-xs font-bold text-slate-800">¥ {{ exp.amount.toLocaleString() }}</div>
-              <button @click="removeExpense(idx)" class="text-[10px] text-red-400 hover:text-red-600 mt-0.5">刪除</button>
+              <div class="text-right">
+                <div class="font-bold text-slate-800 text-sm">¥ {{ Number(exp.amount).toLocaleString() }}</div>
+                <button @click="deleteExpense(eIdx)" class="text-[10px] text-rose-400 hover:text-rose-600 mt-0.5">刪除</button>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div v-if="expenseList.length === 0" class="text-center py-16 text-slate-400">
-          <i class="fa-solid fa-receipt text-4xl mb-2 text-slate-300"></i>
-          <p class="text-xs">尚無花費記錄，點擊右下角「+」快速記帳</p>
         </div>
       </section>
 
     </main>
 
-    <!-- ================= 浮動新增按鈕 (Floating Action Button) ================= -->
-    <button v-if="currentTab === 'itinerary'" 
-            @click="openAddModal"
-            class="fixed bottom-6 right-6 z-30 w-14 h-14 bg-zurich-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-zurich-600/40 hover:bg-zurich-700 active:scale-95 transition-all">
-      <i class="fa-solid fa-plus text-xl"></i>
+    <!-- 浮動新增按鈕 (FAB +) -->
+    <button 
+      v-show="currentTab !== 'info'"
+      @click="handleFabClick" 
+      class="fixed bottom-6 right-6 md:right-[calc(50%-216px)] w-14 h-14 bg-zurich-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-zurich-700 active:scale-95 transition-all z-30"
+      title="新增項目"
+    >
+      <i data-lucide="plus" class="w-7 h-7"></i>
     </button>
 
-    <button v-if="currentTab === 'shopping'" 
-            @click="showShoppingModal = true"
-            class="fixed bottom-6 right-6 z-30 w-14 h-14 bg-zurich-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-zurich-600/40 hover:bg-zurich-700 active:scale-95 transition-all">
-      <i class="fa-solid fa-plus text-xl"></i>
-    </button>
 
-    <button v-if="currentTab === 'expenses'" 
-            @click="showExpenseModal = true"
-            class="fixed bottom-6 right-6 z-30 w-14 h-14 bg-zurich-600 text-white rounded-full flex items-center justify-center shadow-xl shadow-zurich-600/40 hover:bg-zurich-700 active:scale-95 transition-all">
-      <i class="fa-solid fa-plus text-xl"></i>
-    </button>
-
-    <!-- ================= MODAL: 新增/編輯行程彈窗 ================= -->
-    <div v-if="showItineraryModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-          <h3 class="text-base font-bold text-slate-800">{{ isEditing ? '編輯行程' : '新增行程' }}</h3>
-          <button @click="showItineraryModal = false" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+    <!-- 彈出視窗 1：新增/編輯 行程 Modal -->
+    <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
+      <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="font-bold text-base text-slate-800">{{ isEditingSchedule ? '編輯行程' : '新增行程' }}</h3>
+          <button @click="closeScheduleModal" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
 
         <div class="space-y-3 text-xs">
           <div>
-            <label class="font-bold text-slate-700 block mb-1">行程分類</label>
-            <select v-model="activeForm.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+            <label class="font-semibold text-slate-700 block mb-1">分類</label>
+            <select v-model="modalScheduleForm.category" class="w-full p-2.5 bg-slate-50 border rounded-xl">
               <option value="景點">景點</option>
               <option value="住宿">住宿</option>
               <option value="美食">美食</option>
@@ -479,88 +512,92 @@
           </div>
 
           <div>
-            <label class="font-bold text-slate-700 block mb-1">名稱 / 標題</label>
-            <input v-model="activeForm.title" type="text" placeholder="例：卡貝爾橋 Kapellbrücke" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <label class="font-semibold text-slate-700 block mb-1">名稱 / 地點</label>
+            <input v-model="modalScheduleForm.name" type="text" placeholder="例如：卡貝爾橋" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
 
-          <div v-if="['景點', '住宿', '美食', '購物'].includes(activeForm.category)">
-            <label class="font-bold text-slate-700 block mb-1">營業時間</label>
-            <input v-model="activeForm.openHours" type="text" placeholder="例：09:00 - 18:00" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+          <div v-if="['景點', '住宿', '美食', '購物'].includes(modalScheduleForm.category)">
+            <label class="font-semibold text-slate-700 block mb-1">營業時間</label>
+            <input v-model="modalScheduleForm.hours" type="text" placeholder="例如：09:00 - 18:00" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
 
-          <div v-if="activeForm.category === '景點'">
-            <label class="font-bold text-slate-700 block mb-1">門票資訊</label>
-            <input v-model="activeForm.ticket" type="text" placeholder="例：持瑞士通行證免費 / CHF 35" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">交通方式</label>
-              <select v-model="activeForm.transitMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5">
-                <option value="walking">步行</option>
-                <option value="driving">開車</option>
-                <option value="transit">大眾運輸 (火車/公車)</option>
-              </select>
-            </div>
-            <div>
-              <label class="font-bold text-slate-700 block mb-1">交通預估時間 (分鐘)</label>
-              <input v-model.number="activeForm.transitTime" type="number" placeholder="15" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
-            </div>
+          <div v-if="modalScheduleForm.category === '景點'">
+            <label class="font-semibold text-slate-700 block mb-1">門票資訊</label>
+            <input v-model="modalScheduleForm.ticket" type="text" placeholder="例如：持 Swiss Travel Pass 免費" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
 
           <div>
-            <label class="font-bold text-slate-700 block mb-1">特色 & 備註</label>
-            <textarea v-model="activeForm.notes" rows="3" placeholder="貼心提醒、搭乘路線或長輩防護事項..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5"></textarea>
+            <label class="font-semibold text-slate-700 block mb-1">特色 & 備註</label>
+            <textarea v-model="modalScheduleForm.notes" rows="3" placeholder="備註、預約提醒或老人無障礙動線" class="w-full p-2.5 bg-slate-50 border rounded-xl"></textarea>
+          </div>
+
+          <div>
+            <label class="font-semibold text-slate-700 block mb-1">Google Maps 搜尋關鍵字或地址</label>
+            <input v-model="modalScheduleForm.address" type="text" placeholder="將用於一鍵導航" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
         </div>
 
-        <div class="flex gap-2 pt-2">
-          <!-- 編輯模式下的刪除按鈕 (包含二次確認機制) -->
-          <button v-if="isEditing" @click="confirmDeleteItinerary" class="flex-1 py-2.5 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100">
-            刪除此行程
+        <div class="flex items-center gap-2 pt-3">
+          <button 
+            v-if="isEditingSchedule" 
+            @click="confirmDeleteScheduleItem" 
+            class="px-4 py-2.5 bg-rose-50 text-rose-600 font-semibold rounded-xl hover:bg-rose-100 transition"
+          >
+            刪除
           </button>
-          <button @click="saveItinerary" class="flex-2 w-full py-2.5 bg-zurich-600 text-white rounded-xl text-xs font-bold hover:bg-zurich-700">
-            確認儲存
+          <button @click="saveScheduleItem" class="flex-1 py-2.5 bg-zurich-600 text-white font-bold rounded-xl hover:bg-zurich-700 transition">
+            儲存
           </button>
         </div>
       </div>
     </div>
 
-    <!-- ================= MODAL: 新增購物物品彈窗 ================= -->
-    <div v-if="showShoppingModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="text-sm font-bold text-slate-800">新增願望商品</h3>
-          <button @click="showShoppingModal = false" class="text-slate-400 text-base"><i class="fa-solid fa-xmark"></i></button>
+
+    <!-- 彈出視窗 2：新增購物清單 Modal -->
+    <div v-if="showShoppingModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
+      <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="font-bold text-base text-slate-800">新增購物想買物品</h3>
+          <button @click="showShoppingModal = false"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
         </div>
+
         <div class="space-y-3 text-xs">
           <div>
-            <label class="font-bold text-slate-700 block mb-1">商品名稱</label>
-            <input v-model="newShopping.name" type="text" placeholder="例：瑞士蓮黑巧克力、手錶、Victorinox軍刀" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <label class="font-semibold text-slate-700 block mb-1">商品名稱</label>
+            <input v-model="shoppingForm.name" type="text" placeholder="例如：瑞士蓮巧克力、Hermès 圍巾" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
           <div>
-            <label class="font-bold text-slate-700 block mb-1">上傳實物照片 (拍照或相簿)</label>
-            <input type="file" accept="image/*" @change="handleImageUpload" class="w-full text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-zurich-50 file:text-zurich-600 hover:file:bg-zurich-100" />
-            <div v-if="newShopping.image" class="mt-2 w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-              <img :src="newShopping.image" class="w-full h-full object-cover" />
+            <label class="font-semibold text-slate-700 block mb-1">上傳商品照片 (支援手機拍照/相簿)</label>
+            <input type="file" accept="image/*" @change="handleImageUpload" class="w-full text-slate-500 file:mr-3 file:py-1 file:px-3 file:rounded-xl file:border-0 file:text-xs file:bg-zurich-100 file:text-zurich-700" />
+            <div v-if="shoppingForm.image" class="mt-2 w-20 h-20 rounded-xl overflow-hidden border">
+              <img :src="shoppingForm.image" class="w-full h-full object-cover" />
             </div>
           </div>
+          <div>
+            <label class="font-semibold text-slate-700 block mb-1">特色或備註</label>
+            <input v-model="shoppingForm.notes" type="text" placeholder="尺寸、顏色或預算" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
+          </div>
         </div>
-        <button @click="addShoppingItem" class="w-full py-2.5 bg-zurich-600 text-white rounded-xl text-xs font-bold">加入清單</button>
+
+        <button @click="saveShoppingItem" class="w-full py-2.5 bg-zurich-600 text-white font-bold rounded-xl mt-2">
+          加入清單
+        </button>
       </div>
     </div>
 
-    <!-- ================= MODAL: 新增花費彈窗 ================= -->
-    <div v-if="showExpenseModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h3 class="text-sm font-bold text-slate-800">紀錄新花費</h3>
-          <button @click="showExpenseModal = false" class="text-slate-400 text-base"><i class="fa-solid fa-xmark"></i></button>
+
+    <!-- 彈出視窗 3：新增花費 Modal -->
+    <div v-if="showExpenseModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
+      <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="font-bold text-base text-slate-800">記帳（新增花費）</h3>
+          <button @click="showExpenseModal = false"><i data-lucide="x" class="w-5 h-5 text-slate-400"></i></button>
         </div>
+
         <div class="space-y-3 text-xs">
           <div>
-            <label class="font-bold text-slate-700 block mb-1">花費類別</label>
-            <select v-model="newExpense.category" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+            <label class="font-semibold text-slate-700 block mb-1">消費類別</label>
+            <select v-model="expenseForm.category" class="w-full p-2.5 bg-slate-50 border rounded-xl">
               <option value="交通">交通</option>
               <option value="飲食">飲食</option>
               <option value="住宿">住宿</option>
@@ -569,553 +606,848 @@
               <option value="其他">其他</option>
             </select>
           </div>
+
           <div>
-            <label class="font-bold text-slate-700 block mb-1">名稱 / 項目說明</label>
-            <input v-model="newExpense.name" type="text" placeholder="例：Coop 超市補給、起司火鍋晚餐" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <label class="font-semibold text-slate-700 block mb-1">花費項目名稱</label>
+            <input v-model="expenseForm.name" type="text" placeholder="例如：塞納河遊船午餐、少女峰火車票" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
+
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="font-bold text-slate-700 block mb-1">日期 (自動帶入)</label>
-              <input v-model="newExpense.date" type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2" />
+              <label class="font-semibold text-slate-700 block mb-1">日期 (自動帶入)</label>
+              <input v-model="expenseForm.date" type="date" class="w-full p-2 bg-slate-50 border rounded-xl" />
             </div>
             <div>
-              <label class="font-bold text-slate-700 block mb-1">金額 (日幣 JPY)</label>
-              <input v-model.number="newExpense.amount" type="number" placeholder="5000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+              <label class="font-semibold text-slate-700 block mb-1">金額 (日幣 JPY)</label>
+              <input v-model.number="expenseForm.amount" type="number" placeholder="¥ 金額" class="w-full p-2 bg-slate-50 border rounded-xl font-bold" />
             </div>
           </div>
+
           <div>
-            <label class="font-bold text-slate-700 block mb-1">付款方式</label>
-            <div class="flex gap-4 pt-1">
-              <label class="flex items-center gap-1.5"><input type="radio" value="信用卡" v-model="newExpense.payment" /> 信用卡</label>
-              <label class="flex items-center gap-1.5"><input type="radio" value="現金" v-model="newExpense.payment" /> 現金</label>
+            <label class="font-semibold text-slate-700 block mb-1">付款方式</label>
+            <div class="flex gap-4">
+              <label class="flex items-center gap-1.5"><input type="radio" value="信用卡" v-model="expenseForm.paymentMethod" /> 信用卡</label>
+              <label class="flex items-center gap-1.5"><input type="radio" value="現金" v-model="expenseForm.paymentMethod" /> 現金</label>
             </div>
           </div>
+
           <div>
-            <label class="font-bold text-slate-700 block mb-1">備註</label>
-            <input v-model="newExpense.notes" type="text" placeholder="選填..." class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5" />
+            <label class="font-semibold text-slate-700 block mb-1">備註</label>
+            <input v-model="expenseForm.notes" type="text" placeholder="備註細節" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
         </div>
-        <button @click="addExpense" class="w-full py-2.5 bg-zurich-600 text-white rounded-xl text-xs font-bold">儲存花費紀錄</button>
+
+        <button @click="saveExpenseItem" class="w-full py-2.5 bg-zurich-600 text-white font-bold rounded-xl mt-2">
+          儲存花費
+        </button>
       </div>
     </div>
 
   </div>
 
-  <!-- Vue 3 核心邏輯 -->
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
     createApp({
       setup() {
-        const currentTab = ref('itinerary');
-        const selectedDayIdx = ref(0);
-        const exchangeRate = ref(36.8); // 1 CHF ≈ 36.8 TWD
-        const calcChf = ref(100);
+        const currentTab = ref('schedule');
+        const selectedDateIndex = ref(0);
 
-        // 9天預設完整行程資料
-        const days = ref([
+        const tabs = [
+          { id: 'schedule', name: '每日行程', icon: 'map-pin' },
+          { id: 'info', name: '資訊', icon: 'info' },
+          { id: 'shopping', name: '購物清單', icon: 'shopping-bag' },
+          { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
+        ];
+
+        const defaultItinerary = [
           {
-            weekday: 'SUN',
-            dateDisplay: '9/13',
-            location: 'Zürich',
+            dateStr: '2026-09-12',
+            weekday: 'Sat',
+            dayNumber: '12',
+            location: '巴黎 CDG',
+            hotel: null,
+            fromPrevHotelTransit: null,
             items: [
               {
                 id: 'fl-1',
                 category: '航班',
-                title: '法航 AF1614 巴黎戴高樂 - 蘇黎世',
-                flightNo: 'AF1614',
+                flightCode: 'BR087',
+                airline: '長榮航空 EVA Air',
                 depAirport: 'CDG',
-                arrAirport: 'ZRH',
-                depTime: '12:40',
-                arrTime: '14:00',
-                duration: '1小時20分',
-                transitMode: 'transit',
-                transitTime: 30,
-                notes: '抵達後搭乘瑞士國鐵前往蘇黎世市區飯店辦理入住'
-              },
-              {
-                id: 'it-1',
-                category: '住宿',
-                title: 'AMERON Zürich Bellerive au Lac',
-                openHours: '全天開放',
-                transitMode: 'transit',
-                transitTime: 20,
-                notes: '自法國搭乘班機/火車抵達蘇黎世，前往飯店放行李。'
-              },
-              {
-                id: 'it-2',
-                category: '景點',
-                title: '蘇黎世湖畔漫步 (Lake Zurich Promenade)',
-                openHours: '全天開放',
-                transitMode: 'walking',
-                transitTime: 5,
-                ticket: '免費',
-                notes: '下午於飯店對面蘇黎世湖步道輕鬆散步，適應環境並充分休息。'
+                depTime: '23:30',
+                arrAirport: 'TPE',
+                arrTime: '17:45 (+1)',
+                duration: '13h 15m',
+                notes: '預先辦理行李托運，戴高樂機場動線較大，請提早3小時抵達。'
               }
             ]
           },
           {
-            weekday: 'MON',
-            dateDisplay: '9/14',
-            location: 'Luzern & Rigi',
-            items: [
-              {
-                id: 'it-3',
-                category: '景點',
-                title: '琉森卡貝爾橋 (Kapellbrücke)',
-                openHours: '全天開放',
-                transitMode: 'transit',
-                transitTime: 45,
-                ticket: '免費',
-                notes: '搭乘短程火車至琉森觀賞經典木造花橋，平緩好走。'
-              },
-              {
-                id: 'it-4',
-                category: '景點',
-                title: '瑞吉山 (Mt. Rigi) 齒軌列車登頂',
-                openHours: '08:00 - 18:00',
-                transitMode: 'transit',
-                transitTime: 35,
-                ticket: '持瑞士旅行通行證(Swiss Travel Pass)免費',
-                notes: '轉乘遊船與齒軌列車登頂。交通工具直達觀景台，長輩全程免爬坡即可飽覽群山與湖泊。'
-              }
-            ]
-          },
-          {
-            weekday: 'TUE',
-            dateDisplay: '9/15',
-            location: 'Bern & Interlaken',
-            items: [
-              {
-                id: 'it-5',
-                category: '景點',
-                title: '伯恩舊城區鐘樓與熊公園',
-                openHours: '全天開放',
-                transitMode: 'transit',
-                transitTime: 55,
-                ticket: '免費',
-                notes: '蘇黎世退房後停靠伯恩舊城區，在平緩石拱廊觀賞鐘樓與熊公園。'
-              },
-              {
-                id: 'it-6',
-                category: '住宿',
-                title: 'Aparthotel Krone - Self Check-In',
-                openHours: '自助入住 15:00 起',
-                transitMode: 'transit',
-                transitTime: 50,
-                notes: '傍晚抵達茵特拉肯，以密碼自助入住公寓飯店。'
-              }
-            ]
-          },
-          {
-            weekday: 'WED',
-            dateDisplay: '9/16',
-            location: 'Jungfraujoch',
-            items: [
-              {
-                id: 'it-7',
-                category: '景點',
-                title: '少女峰歐洲之巔 (Jungfraujoch)',
-                openHours: '08:00 - 16:30',
-                transitMode: 'transit',
-                transitTime: 40,
-                ticket: '需購票 (持 STP 有折扣優惠)',
-                notes: '搭乘最新艾格快線大纜車銜接齒軌列車，遊覽斯芬克斯觀景台。纜車平穩舒適，提醒長輩高海拔放慢腳步並注意保暖。'
-              }
-            ]
-          },
-          {
-            weekday: 'THU',
-            dateDisplay: '9/17',
-            location: 'Lauterbrunnen & Thun',
-            items: [
-              {
-                id: 'it-8',
-                category: '景點',
-                title: '瀑布鎮 (Lauterbrunnen) 施陶河瀑布',
-                openHours: '全天開放',
-                transitMode: 'transit',
-                transitTime: 25,
-                ticket: '免費',
-                notes: '搭車至地形平坦的瀑布鎮，出站即可仰望施陶河瀑布。'
-              },
-              {
-                id: 'it-9',
-                category: '景點',
-                title: '圖恩湖遊船悠閒返程',
-                openHours: '末班船 17:30',
-                transitMode: 'transit',
-                transitTime: 30,
-                ticket: '持瑞士通行證免費',
-                notes: '下午搭乘圖恩湖遊船悠閒返程，提供充足的靜態休息時間。'
-              }
-            ]
-          },
-          {
-            weekday: 'FRI',
-            dateDisplay: '9/18',
-            location: 'GoldenPass & Geneva',
-            items: [
-              {
-                id: 'it-10',
-                category: '景點',
-                title: '黃金景觀列車 (GoldenPass Express)',
-                openHours: '按班次運營',
-                transitMode: 'transit',
-                transitTime: 190,
-                ticket: '建議預訂景觀座位',
-                notes: '全程安坐大片玻璃窗的景觀車廂欣賞漸層湖景，直達蒙特勒轉日內瓦。'
-              },
-              {
-                id: 'it-11',
-                category: '住宿',
-                title: 'Adina Apartment Hotel Geneva',
-                openHours: '全天開放',
-                transitMode: 'transit',
-                transitTime: 20,
-                notes: '下午抵達日內瓦入住附設廚房的公寓飯店。'
-              }
-            ]
-          },
-          {
-            weekday: 'SAT',
-            dateDisplay: '9/19',
-            location: 'Geneva City',
-            items: [
-              {
-                id: 'it-12',
-                category: '景點',
-                title: '日內瓦大噴泉、花鐘與英國花園',
-                openHours: '10:00 - 日落',
-                transitMode: 'transit',
-                transitTime: 15,
-                ticket: '免費',
-                notes: '搭乘電車進市區參觀大噴泉與花鐘。'
-              },
-              {
-                id: 'it-13',
-                category: '景點',
-                title: '舊城區「迷你觀光小火車」遊覽',
-                openHours: '10:00 - 17:00',
-                transitMode: 'walking',
-                transitTime: 5,
-                ticket: '約 CHF 10-15',
-                notes: '善用舊城區觀光小火車遊覽石板路與古蹟，免去長輩步行爬坡負擔。'
-              }
-            ]
-          },
-          {
-            weekday: 'SUN',
-            dateDisplay: '9/20',
-            location: 'Montreux & Lavaux',
-            items: [
-              {
-                id: 'it-14',
-                category: '景點',
-                title: '西庸城堡 (Chillon Castle)',
-                openHours: '09:30 - 18:00',
-                transitMode: 'transit',
-                transitTime: 50,
-                ticket: '持瑞士通行證免費',
-                notes: '搭火車至蒙特勒參觀水上中世紀城堡。'
-              },
-              {
-                id: 'it-15',
-                category: '景點',
-                title: '拉沃葡萄園小火車 (Lavaux Express)',
-                openHours: '週末運行',
-                transitMode: 'transit',
-                transitTime: 20,
-                ticket: '約 CHF 16',
-                notes: '搭乘專屬觀光小火車穿梭世界遺產葡萄園梯田，不費力欣賞雷夢湖全景。'
-              }
-            ]
-          },
-          {
-            weekday: 'MON',
-            dateDisplay: '9/21',
-            location: 'Geneva to Paris',
+            dateStr: '2026-09-13',
+            weekday: 'Sun',
+            dayNumber: '13',
+            location: '蘇黎世',
+            hotel: {
+              name: 'AMERON Zürich Bellerive au Lac',
+              address: '47 Utoquai, 8008 Zürich, Switzerland'
+            },
+            fromPrevHotelTransit: null,
             items: [
               {
                 id: 'fl-2',
                 category: '航班',
-                title: '法航 AF1843 日內瓦 - 巴黎戴高樂',
-                flightNo: 'AF1843',
+                flightCode: 'AF1614',
+                airline: '法國航空 Air France',
+                depAirport: 'CDG',
+                depTime: '12:40',
+                arrAirport: 'ZRH',
+                arrTime: '13:55',
+                duration: '1h 15m',
+                notes: '巴黎飛往蘇黎世。抵達後前往飯店放行李。'
+              },
+              {
+                id: 'it-13-1',
+                category: '住宿',
+                name: 'AMERON Zürich Bellerive au Lac 辦理入住',
+                hours: '15:00 辦理入住',
+                notes: '放行李稍作休息，適應時差與環境。',
+                address: '47 Utoquai, 8008 Zürich, Switzerland',
+                transitModeIcon: 'bus',
+                transitTime: '25 分鐘'
+              },
+              {
+                id: 'it-13-2',
+                category: '景點',
+                name: '蘇黎世湖畔漫步 (Lake Zurich Promenade)',
+                hours: '全天開放',
+                ticket: '免費',
+                notes: '位於飯店正對面，長輩可平緩散步賞湖、餵天鵝，極度輕鬆舒適。',
+                address: 'Lake Zurich Promenade, Zurich',
+                transitModeIcon: 'footprints',
+                transitTime: '5 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-14',
+            weekday: 'Mon',
+            dayNumber: '14',
+            location: '琉森 / 瑞吉山',
+            hotel: {
+              name: 'AMERON Zürich Bellerive au Lac',
+              address: '47 Utoquai, 8008 Zürich, Switzerland'
+            },
+            fromPrevHotelTransit: '從蘇黎世飯店搭車約 15 分鐘至蘇黎世中央車站',
+            items: [
+              {
+                id: 'it-14-1',
+                category: '景點',
+                name: '琉森卡貝爾橋 (Chapel Bridge)',
+                hours: '全天開放',
+                ticket: '免費',
+                notes: '歐洲最古老的木造廊橋，地勢平緩無負擔。',
+                address: 'Kapellbrücke, 6002 Luzern, Switzerland',
+                transitModeIcon: 'train',
+                transitTime: '45 分鐘 (火車)'
+              },
+              {
+                id: 'it-14-2',
+                category: '景點',
+                name: '瑞吉山觀景台 (Mt. Rigi Kulm)',
+                hours: '齒軌列車全日營運',
+                ticket: '持 Swiss Travel Pass 免費搭乘',
+                notes: '轉乘遊船與齒軌列車登頂。交通工具直達觀景台，長輩全程免爬坡即可飽覽湖光山色。',
+                address: 'Rigi Kulm, Switzerland',
+                transitModeIcon: 'ship',
+                transitTime: '50 分鐘 (遊船+登山火車)'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-15',
+            weekday: 'Tue',
+            dayNumber: '15',
+            location: '伯恩 ➔ 茵特拉肯',
+            hotel: {
+              name: 'Aparthotel Krone - Self Check-In',
+              address: '16 Spielmatte, 3800 Interlaken, Switzerland'
+            },
+            fromPrevHotelTransit: '蘇黎世飯店退房，專車/火車出發前往伯恩',
+            items: [
+              {
+                id: 'it-15-1',
+                category: '景點',
+                name: '伯恩舊城區、鐘樓與熊公園',
+                hours: '全日漫步',
+                ticket: '免費',
+                notes: '世界遺產石拱廊步道，長輩能防雨防曬，沿著平緩拱廊欣賞鐘樓天文鐘與熊公園。',
+                address: 'Zytglogge, Kramgasse 40, 3011 Bern',
+                transitModeIcon: 'train',
+                transitTime: '55 分鐘'
+              },
+              {
+                id: 'it-15-2',
+                category: '住宿',
+                name: 'Aparthotel Krone 自助密碼入住',
+                hours: '16:00 自助入住',
+                notes: '抵達因特拉肯，使用門鎖密碼自助入住，享受舒適的公寓廚房空間。',
+                address: '16 Spielmatte, 3800 Interlaken, Switzerland',
+                transitModeIcon: 'train',
+                transitTime: '50 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-16',
+            weekday: 'Wed',
+            dayNumber: '16',
+            location: '歐洲之巔：少女峰',
+            hotel: {
+              name: 'Aparthotel Krone - Self Check-In',
+              address: '16 Spielmatte, 3800 Interlaken, Switzerland'
+            },
+            fromPrevHotelTransit: '飯店步行 8 分鐘至 Interlaken Ost 車站',
+            items: [
+              {
+                id: 'it-16-1',
+                category: '景點',
+                name: '艾格快線纜車 (Eiger Express) 銜接齒軌火車',
+                hours: '08:00 - 16:30',
+                ticket: '持 Pass 優惠票券',
+                notes: '搭乘最新大纜車，平穩舒適直抵轉乘站，大幅縮短交通時間。',
+                address: 'Grindelwald Terminal, Switzerland',
+                transitModeIcon: 'cable-car',
+                transitTime: '30 分鐘'
+              },
+              {
+                id: 'it-16-2',
+                category: '景點',
+                name: '少女峰斯芬克斯觀景台 (Sphinx Observatory)',
+                hours: '09:00 - 16:00',
+                ticket: '已含於登頂票',
+                notes: '電梯直達觀景台。提醒長輩高海拔處請放慢腳步、注意保暖防風。',
+                address: 'Jungfraujoch, Switzerland',
+                transitModeIcon: 'train',
+                transitTime: '35 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-17',
+            weekday: 'Thu',
+            dayNumber: '17',
+            location: '瀑布鎮 / 圖恩湖',
+            hotel: {
+              name: 'Aparthotel Krone - Self Check-In',
+              address: '16 Spielmatte, 3800 Interlaken, Switzerland'
+            },
+            fromPrevHotelTransit: '因特拉肯出發',
+            items: [
+              {
+                id: 'it-17-1',
+                category: '景點',
+                name: '瀑布鎮 (Lauterbrunnen) 與施陶河瀑布',
+                hours: '全日開放',
+                ticket: '免費',
+                notes: '地形極為平坦，一出火車站即可仰望落差近300米的壯觀瀑布。',
+                address: 'Staubbachfall Wasserfall, Lauterbrunnen',
+                transitModeIcon: 'train',
+                transitTime: '20 分鐘'
+              },
+              {
+                id: 'it-17-2',
+                category: '景點',
+                name: '圖恩湖遊船巡禮 (Lake Thun Cruise)',
+                hours: '配合船班時間',
+                ticket: 'Pass 可乘船',
+                notes: '下午悠閒安坐船艙內，在平穩的湖泊上享受下午茶與群山美景。',
+                address: 'Interlaken West ThS, Interlaken',
+                transitModeIcon: 'ship',
+                transitTime: '45 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-18',
+            weekday: 'Fri',
+            dayNumber: '18',
+            location: '黃金列車 ➔ 日內瓦',
+            hotel: {
+              name: 'Adina Apartment Hotel Geneva',
+              address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
+            },
+            fromPrevHotelTransit: '退房後前往 Interlaken Ost 搭乘黃金景觀列車',
+            items: [
+              {
+                id: 'it-18-1',
+                category: '景點',
+                name: '黃金景觀列車 (GoldenPass Panoramic) 往蒙特勒',
+                hours: '依預約車次',
+                ticket: '建議預訂全景座',
+                notes: '全程安坐大片全景車窗前，飽覽漸層湖泊與山谷風光，免除長輩奔波。',
+                address: 'Montreux Gare, Montreux',
+                transitModeIcon: 'train',
+                transitTime: '2 小時'
+              },
+              {
+                id: 'it-18-2',
+                category: '住宿',
+                name: 'Adina Apartment Hotel Geneva 入住',
+                hours: '15:00 辦理入住',
+                notes: '抵達日內瓦，入住附廚房的優質公寓式飯店，生活機能極佳。',
+                address: 'Route de Meyrin 125, 1219 Geneva',
+                transitModeIcon: 'train',
+                transitTime: '1 小時'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-19',
+            weekday: 'Sat',
+            dayNumber: '19',
+            location: '日內瓦市區',
+            hotel: {
+              name: 'Adina Apartment Hotel Geneva',
+              address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
+            },
+            fromPrevHotelTransit: '飯店門口搭乘輕軌電車約 15 分鐘至市中心',
+            items: [
+              {
+                id: 'it-19-1',
+                category: '景點',
+                name: '雷夢湖大噴泉 (Jet d\'Eau) 與英國花園花鐘',
+                hours: '全天開放',
+                ticket: '免費',
+                notes: '地勢平坦的湖畔公園散步拍照，觀看標誌性的 140 公尺大噴泉。',
+                address: 'Jet d\'Eau, Geneva',
+                transitModeIcon: 'tram',
+                transitTime: '15 分鐘'
+              },
+              {
+                id: 'it-19-2',
+                category: '景點',
+                name: '日內瓦舊城區迷你觀光小火車',
+                hours: '10:00 - 17:00',
+                ticket: '約 10-15 CHF',
+                notes: '搭乘專用小火車遊覽舊城區石板坡道與古蹟，完全免去長輩步行爬坡負擔。',
+                address: 'Vieille Ville, Geneva',
+                transitModeIcon: 'bus',
+                transitTime: '10 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-20',
+            weekday: 'Sun',
+            dayNumber: '20',
+            location: '西庸城堡 / 拉沃葡萄園',
+            hotel: {
+              name: 'Adina Apartment Hotel Geneva',
+              address: 'Route de Meyrin 125, 1219 Geneva, Switzerland'
+            },
+            fromPrevHotelTransit: '日內瓦搭乘火車前往蒙特勒',
+            items: [
+              {
+                id: 'it-20-1',
+                category: '景點',
+                name: '西庸城堡 (Chillon Castle)',
+                hours: '10:00 - 18:00',
+                ticket: 'Swiss Travel Pass 免費',
+                notes: '建於湖畔岩石上的中世紀城堡，沿湖平坦步道景色極佳。',
+                address: 'Chillon Castle, Veytaux',
+                transitModeIcon: 'train',
+                transitTime: '55 分鐘'
+              },
+              {
+                id: 'it-20-2',
+                category: '景點',
+                name: '拉沃葡萄園觀光小火車 (Lavaux Express)',
+                hours: '依班次時刻',
+                ticket: '需購小火車票',
+                notes: '搭乘小火車輕鬆穿梭世界遺產梯田葡萄園，遠眺雷夢湖與阿爾卑斯山。',
+                address: 'Lavaux, Cully, Switzerland',
+                transitModeIcon: 'bus',
+                transitTime: '25 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-21',
+            weekday: 'Mon',
+            dayNumber: '21',
+            location: '日內瓦 ➔ 巴黎',
+            hotel: {
+              name: 'Hôtel Vernet Champs Elysées Paris',
+              address: '25 Rue Vernet, 75008 Paris, France'
+            },
+            fromPrevHotelTransit: '飯店出發至 GVA 機場僅約 10 分鐘',
+            items: [
+              {
+                id: 'fl-3',
+                category: '航班',
+                flightCode: 'AF1843',
+                airline: '法國航空 Air France',
                 depAirport: 'GVA',
-                arrAirport: 'CDG',
                 depTime: '12:00',
+                arrAirport: 'CDG',
                 arrTime: '13:15',
-                duration: '1小時15分',
-                transitMode: 'transit',
-                transitTime: 15,
-                notes: '飯店距離機場極近（電車或計程車約10分鐘），上午10:00從容出發。'
+                duration: '1h 15m',
+                notes: '10:00 前往 GVA 機場搭機前往巴黎戴高樂機場。'
+              },
+              {
+                id: 'it-21-1',
+                category: '住宿',
+                name: 'Hôtel Vernet Champs Elysées Paris 入住',
+                hours: '15:00 入住',
+                notes: '抵達飯店放行李稍作休息，享用典雅法式設施。晚間於香榭麗舍大道周邊輕鬆用餐。',
+                address: '25 Rue Vernet, 75008 Paris, France',
+                transitModeIcon: 'car',
+                transitTime: '45 分鐘 (機場接送/計程車)'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-22',
+            weekday: 'Tue',
+            dayNumber: '22',
+            location: '巴黎經典與塞納河',
+            hotel: {
+              name: 'Hôtel Vernet Champs Elysées Paris',
+              address: '25 Rue Vernet, 75008 Paris, France'
+            },
+            fromPrevHotelTransit: '飯店出發',
+            items: [
+              {
+                id: 'it-22-1',
+                category: '景點',
+                name: '夏佑宮 (Trocadéro) 遠眺艾菲爾鐵塔 & 凱旋門',
+                hours: '09:30 - 12:00',
+                ticket: '免費拍照',
+                notes: '地勢最平坦、拍照最壯觀的鐵塔視角，免去長輩攀登之苦。隨後順訪戴高樂廣場凱旋門。',
+                address: 'Place du Trocadéro, 75016 Paris',
+                transitModeIcon: 'car',
+                transitTime: '10 分鐘'
+              },
+              {
+                id: 'it-22-2',
+                category: '景點',
+                name: '盧森堡公園 (Jardin du Luxembourg)',
+                hours: '14:30 - 17:00',
+                ticket: '免費',
+                notes: '地勢平緩的絕美花園。長輩可坐在綠蔭長椅上悠閒看噴泉與法式園藝。',
+                address: 'Jardin du Luxembourg, 75006 Paris',
+                transitModeIcon: 'car',
+                transitTime: '20 分鐘'
+              },
+              {
+                id: 'it-22-3',
+                category: '美食',
+                name: '塞納河景觀晚宴遊船 (Seine Dinner Cruise)',
+                hours: '18:30 - 20:30 (需提前預約)',
+                ticket: '含晚餐船票',
+                notes: '全程安坐船上，一邊享用精緻法式晚宴，一邊欣賞被燈光點亮的巴黎地標，免步行且浪漫。',
+                address: 'Port de la Bourdonnais, 75007 Paris',
+                transitModeIcon: 'ship',
+                transitTime: '15 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-23',
+            weekday: 'Wed',
+            dayNumber: '23',
+            location: '巴黎藝術與蒙馬特',
+            hotel: {
+              name: 'Hôtel Vernet Champs Elysées Paris',
+              address: '25 Rue Vernet, 75008 Paris, France'
+            },
+            fromPrevHotelTransit: '飯店出發',
+            items: [
+              {
+                id: 'it-23-1',
+                category: '景點',
+                name: '聖禮拜堂 (Sainte-Chapelle) 彩繪玻璃',
+                hours: '09:30 - 12:30',
+                ticket: '建議先線上預約門票',
+                notes: '擁有全巴黎最震撼璀璨的彩繪玻璃窗，動線小而精美，對長輩體力負擔極低。',
+                address: '10 Bd du Palais, 75001 Paris',
+                transitModeIcon: 'car',
+                transitTime: '20 分鐘'
+              },
+              {
+                id: 'it-23-2',
+                category: '景點',
+                name: '蒙馬特聖心堂與纜車 (Funiculaire)',
+                hours: '14:30 - 17:00',
+                ticket: '地鐵票即可搭纜車',
+                notes: '切勿走階梯！乘計程車抵達纜車站，搭乘纜車直達聖心堂門口，俯瞰全巴黎景色。',
+                address: 'Funiculaire de Montmartre, Paris',
+                transitModeIcon: 'cable-car',
+                transitTime: '25 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-09-24',
+            weekday: 'Thu',
+            dayNumber: '24',
+            location: '巴黎退房與啟程',
+            hotel: null,
+            fromPrevHotelTransit: '08:20 前抵達戴高樂機場 CDG',
+            items: [
+              {
+                id: 'it-24-1',
+                category: '其他',
+                name: '飯店享用早餐後退房 ➔ 前往戴高樂機場',
+                hours: '07:30 - 08:30',
+                notes: '提早出發避開晨間塞車，戴高樂機場退稅與安檢動線較長，預留 3 小時以上。',
+                address: 'Paris Charles de Gaulle Airport, France',
+                transitModeIcon: 'car',
+                transitTime: '45 分鐘'
+              }
+            ]
+          },
+          {
+            dateStr: '2026-10-05',
+            weekday: 'Mon',
+            dayNumber: '05',
+            location: '返台航班',
+            hotel: null,
+            fromPrevHotelTransit: null,
+            items: [
+              {
+                id: 'fl-4',
+                category: '航班',
+                flightCode: 'BR088',
+                airline: '長榮航空 EVA Air',
+                depAirport: 'CDG',
+                depTime: '11:20',
+                arrAirport: 'TPE',
+                arrTime: '06:30 (+1)',
+                duration: '13h 10m',
+                notes: '返台長榮直飛班機。'
               }
             ]
           }
+        ];
+
+        const itineraryDays = ref(JSON.parse(localStorage.getItem('my_itinerary')) || defaultItinerary);
+        const shoppingList = ref(JSON.parse(localStorage.getItem('my_shopping')) || []);
+        const expenses = ref(JSON.parse(localStorage.getItem('my_expenses')) || [
+          { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券', date: '2026-09-13', amount: 96000, paymentMethod: '信用卡', notes: '長輩頭等艙通行證' }
         ]);
 
-        const currentDay = computed(() => days.value[selectedDayIdx.value] || days.value[0]);
+        const weatherCityMap = {
+          '蘇黎世': { icon: 'sun-cloud', summary: '晴時多雲 · 舒適', temp: 19, feelsLike: 18 },
+          '琉森 / 瑞吉山': { icon: 'sun', summary: '晴朗山景 · 涼爽', temp: 16, feelsLike: 15 },
+          '伯恩 ➔ 茵特拉肯': { icon: 'cloud-sun', summary: '多雲偶見陽光', temp: 18, feelsLike: 17 },
+          '歐洲之巔：少女峰': { icon: 'snowflake', summary: '高山雪地 · 嚴寒防風', temp: -2, feelsLike: -7 },
+          '瀑布鎮 / 圖恩湖': { icon: 'cloud-rain', summary: '微雨清涼', temp: 15, feelsLike: 14 },
+          '黃金列車 ➔ 日內瓦': { icon: 'sun', summary: '晴朗舒適', temp: 20, feelsLike: 20 },
+          '日內瓦市區': { icon: 'sun-dim', summary: '湖畔微風 · 舒適', temp: 21, feelsLike: 20 },
+          '西庸城堡 / 拉沃葡萄園': { icon: 'sun', summary: '秋季陽光暖和', temp: 22, feelsLike: 22 },
+          '日內瓦 ➔ 巴黎': { icon: 'cloud', summary: '陰天多雲', temp: 19, feelsLike: 18 },
+          '巴黎經典與塞納河': { icon: 'sun-cloud', summary: '秋高氣爽 · 宜人', temp: 20, feelsLike: 19 },
+          '巴黎藝術與蒙馬特': { icon: 'sun', summary: '陽光普照', temp: 21, feelsLike: 21 },
+          '巴黎退房與啟程': { icon: 'cloud-sun', summary: '微涼晨光', temp: 17, feelsLike: 16 },
+        };
 
-        // 模擬即時天氣
-        const currentWeather = computed(() => {
-          const loc = currentDay.value.location;
-          if (loc.includes('Jungfraujoch')) return { icon: 'fa-solid fa-snowflake text-cyan-500', text: '輕微降雪', temp: '-2', feelLike: '-7' };
-          if (loc.includes('Zürich') || loc.includes('Luzern')) return { icon: 'fa-solid fa-cloud-sun text-amber-500', text: '晴時多雲', temp: '19', feelLike: '18' };
-          return { icon: 'fa-solid fa-sun text-amber-500', text: '明朗晴天', temp: '22', feelLike: '21' };
+        const currentDay = computed(() => itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0]);
+        const currentDayWeather = computed(() => weatherCityMap[currentDay.value.location] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 });
+
+        // === 即時匯率系統 (自動連網更新 + 離線快取) ===
+        const exchangeCurrency = ref('CHF');
+        const inputForeignAmount = ref(100);
+        const isRateLoading = ref(false);
+        const lastUpdatedTime = ref(localStorage.getItem('rates_last_updated') || '尚未連網');
+
+        // 預設匯率與快取
+        const currentRates = ref(JSON.parse(localStorage.getItem('cached_rates')) || {
+          CHF: 37.8,
+          EUR: 35.4,
+          USD: 32.2
         });
 
-        // 航班清單
-        const flightList = ref([
-          { type: '啟程', code: 'BR087', date: '2026/09/12', dep: 'CDG', arr: 'TPE', depTime: '23:30', arrTime: '18:20+1', duration: '12h 50m' },
-          { type: '歐陸段', code: 'AF1614', date: '2026/09/13', dep: 'CDG', arr: 'ZRH', depTime: '12:40', arrTime: '14:00', duration: '1h 20m' },
-          { type: '歐陸段', code: 'AF1843', date: '2026/09/21', dep: 'GVA', arr: 'CDG', depTime: '12:00', arrTime: '13:15', duration: '1h 15m' },
-          { type: '回程', code: 'BR088', date: '2026/10/05', dep: 'CDG', arr: 'TPE', depTime: '11:20', arrTime: '06:30+1', duration: '13h 10m' }
-        ]);
+        const convertedTWD = computed(() => {
+          const rate = currentRates.value[exchangeCurrency.value] || 1;
+          return Math.round((inputForeignAmount.value || 0) * rate);
+        });
 
-        // 飯店清單
-        const hotels = ref([
-          { name: 'AMERON Zürich Bellerive au Lac', period: '9/13~9/15 (2夜)', address: '47 Utoquai, 8008 Zürich, Switzerland', tel: '+41 44 244 44 44' },
-          { name: 'Aparthotel Krone - Self Check-In', period: '9/15~9/18 (3夜)', address: '16 Spielmatte, 3800 Interlaken, Switzerland', tel: '+41 33 827 81 81' },
-          { name: 'Adina Apartment Hotel Geneva', period: '9/18~9/21 (3夜)', address: 'Route de Meyrin 125, 1219 Geneva, Switzerland', tel: '+41 22 555 10 00' },
-          { name: 'Adina Apartment Hotel Geneva', period: '9/21~9/24 (3夜)', address: 'Route de Meyrin 125, 1219 Geneva, Switzerland', tel: '+41 22 555 10 00' }
-        ]);
+        // 抓取真實即時匯率函式
+        const fetchLiveRates = async () => {
+          isRateLoading.value = true;
+          try {
+            const res = await fetch('https://open.er-api.com/v6/latest/TWD');
+            const data = await res.json();
+            if (data && data.result === 'success') {
+              const rates = data.rates;
+              currentRates.value = {
+                CHF: Number((1 / rates.CHF).toFixed(2)),
+                EUR: Number((1 / rates.EUR).toFixed(2)),
+                USD: Number((1 / rates.USD).toFixed(2))
+              };
+              const now = new Date();
+              const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+              lastUpdatedTime.value = timeStr;
+              localStorage.setItem('cached_rates', JSON.stringify(currentRates.value));
+              localStorage.setItem('rates_last_updated', timeStr);
+            }
+          } catch (err) {
+            console.warn('匯率連線異常，自動載入離線暫存牌價', err);
+          } finally {
+            isRateLoading.value = false;
+          }
+        };
 
-        // 購物清單狀態
-        const shoppingList = ref([
-          { name: '瑞士純黑巧克力 (Lindt Excellence 85%)', image: 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?auto=format&fit=crop&w=400&q=80', date: '蘇黎世老城購入' },
-          { name: 'Victorinox 瑞士維氏指甲剪/萬用刀', image: '', date: '因特拉肯旗艦店' }
-        ]);
+        const flightDetails = [
+          { type: '去程 (巴黎➔台北)', code: 'BR087', date: '2026/09/12', from: 'CDG', depTime: '23:30', to: 'TPE', arrTime: '17:45 (+1)', duration: '13h 15m' },
+          { type: '瑞士 (巴黎➔蘇黎世)', code: 'AF1614', date: '2026/09/13', from: 'CDG', depTime: '12:40', to: 'ZRH', arrTime: '13:55', duration: '1h 15m' },
+          { type: '瑞士 (日內瓦➔巴黎)', code: 'AF1843', date: '2026/09/21', from: 'GVA', depTime: '12:00', to: 'CDG', arrTime: '13:15', duration: '1h 15m' },
+          { type: '回程 (巴黎➔台北)', code: 'BR088', date: '2026/10/05', from: 'CDG', depTime: '11:20', to: 'TPE', arrTime: '06:30 (+1)', duration: '13h 10m' },
+        ];
+
+        const hotelList = [
+          { name: 'AMERON Zürich Bellerive au Lac', dates: '9/13~9/15 (2夜)', address: '47 Utoquai, 8008 Zürich, Switzerland', phone: '+41 44 244 80 00' },
+          { name: 'Aparthotel Krone - Self Check-In', dates: '9/15~9/18 (3夜)', address: '16 Spielmatte, 3800 Interlaken, Switzerland', phone: '+41 33 827 81 81' },
+          { name: 'Adina Apartment Hotel Geneva', dates: '9/18~9/21 (3夜)', address: 'Route de Meyrin 125, 1219 Geneva, Switzerland', phone: '+41 22 552 48 00' },
+          { name: 'Hôtel Vernet Champs Elysées Paris', dates: '9/21~9/24 (3夜)', address: '25 Rue Vernet, 75008 Paris, France', phone: '+33 1 44 31 98 00' },
+        ];
+
+        const totalExpenseJPY = computed(() => {
+          return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+        });
+
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary', JSON.stringify(newVal)), { deep: true });
+        watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
+        watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
+
+        const refreshIcons = () => {
+          nextTick(() => {
+            if (window.lucide) window.lucide.createIcons();
+          });
+        };
+
+        watch([currentTab, selectedDateIndex], refreshIcons);
+
+        const openGoogleMap = (query) => {
+          if (!query) return;
+          const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+          window.open(url, '_blank');
+        };
+
+        const showScheduleModal = ref(false);
+        const isEditingSchedule = ref(false);
+        const modalScheduleForm = ref({});
+
         const showShoppingModal = ref(false);
-        const newShopping = ref({ name: '', image: '' });
+        const shoppingForm = ref({ name: '', image: null, notes: '', bought: false });
+
+        const showExpenseModal = ref(false);
+        const expenseForm = ref({
+          category: '飲食',
+          name: '',
+          date: new Date().toISOString().slice(0, 10),
+          amount: '',
+          paymentMethod: '信用卡',
+          notes: ''
+        });
+
+        const handleFabClick = () => {
+          if (currentTab.value === 'schedule') {
+            isEditingSchedule.value = false;
+            modalScheduleForm.value = {
+              id: 'it-' + Date.now(),
+              category: '景點',
+              name: '',
+              hours: '',
+              ticket: '',
+              notes: '',
+              address: '',
+              transitModeIcon: 'bus',
+              transitTime: '15 分鐘'
+            };
+            showScheduleModal.value = true;
+          } else if (currentTab.value === 'shopping') {
+            shoppingForm.value = { name: '', image: null, notes: '', bought: false };
+            showShoppingModal.value = true;
+          } else if (currentTab.value === 'expenses') {
+            expenseForm.value = {
+              category: '飲食',
+              name: '',
+              date: new Date().toISOString().slice(0, 10),
+              amount: '',
+              paymentMethod: '信用卡',
+              notes: ''
+            };
+            showExpenseModal.value = true;
+          }
+          refreshIcons();
+        };
+
+        const openEditModal = (item) => {
+          isEditingSchedule.value = true;
+          modalScheduleForm.value = JSON.parse(JSON.stringify(item));
+          showScheduleModal.value = true;
+          refreshIcons();
+        };
+
+        const closeScheduleModal = () => {
+          showScheduleModal.value = false;
+        };
+
+        const saveScheduleItem = () => {
+          if (!modalScheduleForm.value.name) {
+            alert('請填寫行程名稱');
+            return;
+          }
+          const items = currentDay.value.items;
+          if (isEditingSchedule.value) {
+            const idx = items.findIndex(i => i.id === modalScheduleForm.value.id);
+            if (idx !== -1) items[idx] = { ...modalScheduleForm.value };
+          } else {
+            items.push({ ...modalScheduleForm.value });
+          }
+          showScheduleModal.value = false;
+          refreshIcons();
+        };
+
+        const confirmDeleteScheduleItem = () => {
+          if (confirm(`確定要刪除「${modalScheduleForm.value.name}」這個行程嗎？此操作無法還原。`)) {
+            const items = currentDay.value.items;
+            const idx = items.findIndex(i => i.id === modalScheduleForm.value.id);
+            if (idx !== -1) items.splice(idx, 1);
+            showScheduleModal.value = false;
+            refreshIcons();
+          }
+        };
 
         const handleImageUpload = (e) => {
           const file = e.target.files[0];
           if (file) {
             const reader = new FileReader();
-            reader.onload = (uploadEvent) => {
-              newShopping.value.image = uploadEvent.target.result;
+            reader.onload = (event) => {
+              shoppingForm.value.image = event.target.result;
             };
             reader.readAsDataURL(file);
           }
         };
 
-        const addShoppingItem = () => {
-          if (!newShopping.value.name) return;
+        const saveShoppingItem = () => {
+          if (!shoppingForm.value.name) return;
           shoppingList.value.push({
-            name: newShopping.value.name,
-            image: newShopping.value.image,
-            date: new Date().toLocaleDateString()
+            id: 'shop-' + Date.now(),
+            ...shoppingForm.value
           });
-          newShopping.value = { name: '', image: '' };
           showShoppingModal.value = false;
-          saveToStorage();
+          refreshIcons();
         };
 
-        const removeShoppingItem = (idx) => {
-          if (confirm('確定要自購物清單移除此項目嗎？')) {
+        const deleteShoppingItem = (idx) => {
+          if (confirm('確定刪除此購物項目？')) {
             shoppingList.value.splice(idx, 1);
-            saveToStorage();
           }
         };
 
-        // 花費記帳狀態 (日幣 JPY)
-        const expenseList = ref([
-          { category: '交通', name: '全景景觀快線座位預訂', date: '2026-09-13', amount: 8400, payment: '信用卡', notes: '全景玻璃車廂' },
-          { category: '飲食', name: '蘇黎世湖畔輕食午餐', date: '2026-09-13', amount: 9800, payment: '信用卡', notes: '4人套餐' }
-        ]);
-        const showExpenseModal = ref(false);
-        const newExpense = ref({
-          category: '飲食',
-          name: '',
-          date: new Date().toISOString().split('T')[0],
-          amount: null,
-          payment: '信用卡',
-          notes: ''
-        });
-
-        const totalExpensesJPY = computed(() => {
-          return expenseList.value.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-        });
-
-        const addExpense = () => {
-          if (!newExpense.value.name || !newExpense.value.amount) return;
-          expenseList.value.unshift({ ...newExpense.value });
-          newExpense.value = {
-            category: '飲食',
-            name: '',
-            date: new Date().toISOString().split('T')[0],
-            amount: null,
-            payment: '信用卡',
-            notes: ''
-          };
+        const saveExpenseItem = () => {
+          if (!expenseForm.value.name || !expenseForm.value.amount) return;
+          expenses.value.unshift({
+            id: 'exp-' + Date.now(),
+            ...expenseForm.value
+          });
           showExpenseModal.value = false;
-          saveToStorage();
+          refreshIcons();
         };
 
-        const removeExpense = (idx) => {
-          if (confirm('確定刪除該筆支出記錄？')) {
-            expenseList.value.splice(idx, 1);
-            saveToStorage();
+        const deleteExpense = (idx) => {
+          if (confirm('確定要刪除這筆花費紀錄嗎？')) {
+            expenses.value.splice(idx, 1);
           }
         };
 
-        // 行程編輯/新增狀態
-        const showItineraryModal = ref(false);
-        const isEditing = ref(false);
-        const activeForm = ref({
-          id: '',
-          category: '景點',
-          title: '',
-          openHours: '',
-          ticket: '',
-          transitMode: 'transit',
-          transitTime: 15,
-          notes: ''
-        });
-
-        const openAddModal = () => {
-          isEditing.value = false;
-          activeForm.value = {
-            id: 'it-' + Date.now(),
-            category: '景點',
-            title: '',
-            openHours: '',
-            ticket: '',
-            transitMode: 'transit',
-            transitTime: 15,
-            notes: ''
-          };
-          showItineraryModal.value = true;
-        };
-
-        const editItinerary = (item) => {
-          isEditing.value = true;
-          activeForm.value = JSON.parse(JSON.stringify(item));
-          showItineraryModal.value = true;
-        };
-
-        const saveItinerary = () => {
-          if (!activeForm.value.title) return;
-          const items = currentDay.value.items;
-          if (isEditing.value) {
-            const idx = items.findIndex(i => i.id === activeForm.value.id);
-            if (idx !== -1) items[idx] = { ...activeForm.value };
-          } else {
-            items.push({ ...activeForm.value });
-          }
-          showItineraryModal.value = false;
-          saveToStorage();
-        };
-
-        const confirmDeleteItinerary = () => {
-          if (confirm(`確定要刪除「${activeForm.value.title}」嗎？此操作無法還原。`)) {
-            const items = currentDay.value.items;
-            const idx = items.findIndex(i => i.id === activeForm.value.id);
-            if (idx !== -1) items.splice(idx, 1);
-            showItineraryModal.value = false;
-            saveToStorage();
+        const categoryBadgeColor = (cat) => {
+          switch (cat) {
+            case '景點': return 'bg-sky-50 text-sky-700';
+            case '住宿': return 'bg-indigo-50 text-indigo-700';
+            case '美食': return 'bg-amber-50 text-amber-700';
+            case '購物': return 'bg-rose-50 text-rose-700';
+            case '航班': return 'bg-blue-600 text-white';
+            default: return 'bg-slate-100 text-slate-700';
           }
         };
 
-        // 拖曳重排 (Drag and Drop)
-        let draggedIndex = null;
-        const onDragStart = (idx) => { draggedIndex = idx; };
-        const onDrop = (targetIdx) => {
-          if (draggedIndex === null || draggedIndex === targetIdx) return;
-          const items = currentDay.value.items;
-          const moved = items.splice(draggedIndex, 1)[0];
-          items.splice(targetIdx, 0, moved);
-          draggedIndex = null;
-          saveToStorage();
-        };
-
-        // 導航到 Google Map
-        const openGoogleMap = (query) => {
-          const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-          window.open(url, '_blank');
-        };
-
-        // 工具輔助
-        const getCategoryBadge = (cat) => {
-          switch(cat) {
-            case '景點': return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
-            case '住宿': return 'bg-purple-50 text-purple-700 border border-purple-200';
-            case '美食': return 'bg-amber-50 text-amber-700 border border-amber-200';
-            case '購物': return 'bg-pink-50 text-pink-700 border border-pink-200';
-            default: return 'bg-slate-100 text-slate-700 border border-slate-200';
+        const expenseCategoryIcon = (cat) => {
+          switch (cat) {
+            case '交通': return 'train';
+            case '飲食': return 'coffee';
+            case '住宿': return 'home';
+            case '門票': return 'ticket';
+            case '購物': return 'shopping-bag';
+            default: return 'tag';
           }
         };
 
-        const getTransitIcon = (mode) => {
-          switch(mode) {
-            case 'walking': return 'fa-solid fa-person-walking';
-            case 'driving': return 'fa-solid fa-car';
-            default: return 'fa-solid fa-train-subway';
+        const initSortable = () => {
+          const el = document.getElementById('schedule-list');
+          if (el && window.Sortable) {
+            Sortable.create(el, {
+              animation: 200,
+              handle: '.cursor-grab',
+              onEnd: (evt) => {
+                const dayItems = currentDay.value.items;
+                const movedItem = dayItems.splice(evt.oldIndex, 1)[0];
+                dayItems.splice(evt.newIndex, 0, movedItem);
+                refreshIcons();
+              }
+            });
           }
-        };
-
-        const getExpenseCategoryIcon = (cat) => {
-          switch(cat) {
-            case '交通': return 'fa-solid fa-train-subway';
-            case '飲食': return 'fa-solid fa-utensils';
-            case '住宿': return 'fa-solid fa-hotel';
-            case '門票': return 'fa-solid fa-ticket';
-            case '購物': return 'fa-solid fa-bag-shopping';
-            default: return 'fa-solid fa-receipt';
-          }
-        };
-
-        // 本機快顯儲存
-        const saveToStorage = () => {
-          localStorage.setItem('swiss_trip_days', JSON.stringify(days.value));
-          localStorage.setItem('swiss_trip_shopping', JSON.stringify(shoppingList.value));
-          localStorage.setItem('swiss_trip_expense', JSON.stringify(expenseList.value));
         };
 
         onMounted(() => {
-          const cachedDays = localStorage.getItem('swiss_trip_days');
-          if (cachedDays) days.value = JSON.parse(cachedDays);
-          const cachedShop = localStorage.getItem('swiss_trip_shopping');
-          if (cachedShop) shoppingList.value = JSON.parse(cachedShop);
-          const cachedExp = localStorage.getItem('swiss_trip_expense');
-          if (cachedExp) expenseList.value = JSON.parse(cachedExp);
+          refreshIcons();
+          initSortable();
+          fetchLiveRates(); // 開啟 App 自動抓取即時匯率
         });
 
         return {
           currentTab,
-          days,
-          selectedDayIdx,
+          tabs,
+          selectedDateIndex,
+          itineraryDays,
           currentDay,
-          currentWeather,
-          flightList,
-          hotels,
-          exchangeRate,
-          calcChf,
+          currentDayWeather,
+          flightDetails,
+          hotelList,
           shoppingList,
-          newShopping,
+          expenses,
+          totalExpenseJPY,
+          exchangeCurrency,
+          inputForeignAmount,
+          currentRates,
+          convertedTWD,
+          isRateLoading,
+          lastUpdatedTime,
+          fetchLiveRates,
+          showScheduleModal,
+          isEditingSchedule,
+          modalScheduleForm,
           showShoppingModal,
-          handleImageUpload,
-          addShoppingItem,
-          removeShoppingItem,
-          expenseList,
-          newExpense,
+          shoppingForm,
           showExpenseModal,
-          totalExpensesJPY,
-          addExpense,
-          removeExpense,
-          showItineraryModal,
-          isEditing,
-          activeForm,
-          openAddModal,
-          editItinerary,
-          saveItinerary,
-          confirmDeleteItinerary,
-          onDragStart,
-          onDrop,
-          openGoogleMap,
-          getCategoryBadge,
-          getTransitIcon,
-          getExpenseCategoryIcon
+          expenseForm,
+          handleFabClick,
+          openEditModal,
+          closeScheduleModal,
+          saveScheduleItem,
+          confirmDeleteScheduleItem,
+          handleImageUpload,
+          saveShoppingItem,
+          deleteShoppingItem,
+          saveExpenseItem,
+          deleteExpense,
+          categoryBadgeColor,
+          expenseCategoryIcon,
+          openGoogleMap
         };
       }
     }).mount('#app');
