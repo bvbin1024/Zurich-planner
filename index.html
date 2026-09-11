@@ -157,7 +157,7 @@
               <div class="h-px bg-slate-200 flex-1"></div>
             </div>
 
-            <!-- 航班專用特殊卡片 -->
+            <!-- 航班專用卡片 -->
             <div 
               v-if="item.category === '航班'" 
               class="bg-gradient-to-br from-zurich-700 to-zurich-800 text-white rounded-2xl p-4 shadow-md relative cursor-grab active:cursor-grabbing border border-zurich-600"
@@ -246,7 +246,7 @@
       <!-- ================= 2. 資訊頁 (i) ================= -->
       <section v-show="currentTab === 'info'" class="space-y-4">
         
-        <!-- 即時匯率換算 (串接國際即時 API) -->
+        <!-- 即時外幣換算為新台幣 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
@@ -256,7 +256,6 @@
               <h2 class="text-sm font-bold text-slate-800">匯率即時換算 (➔ 新台幣 TWD)</h2>
             </div>
 
-            <!-- 手動重整與狀態指示 -->
             <button 
               @click="fetchLiveRates" 
               :disabled="isRateLoading"
@@ -430,18 +429,20 @@
       </section>
 
 
-      <!-- ================= 4. 花費記帳 (金錢) ================= -->
+      <!-- ================= 4. 花費記帳 (幣別已修改為台幣 TWD) ================= -->
       <section v-show="currentTab === 'expenses'" class="space-y-4">
+        <!-- 總花費統計大卡片 -->
         <div class="bg-gradient-to-br from-zurich-800 to-zurich-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden">
           <span class="text-xs uppercase font-semibold text-zurich-200">Total Expenses</span>
           <div class="text-3xl font-extrabold mt-1">
-            ¥ {{ totalExpenseJPY.toLocaleString() }}
+            NT$ {{ totalExpenseTWD.toLocaleString() }}
           </div>
           <div class="text-xs text-zurich-200 mt-1">
-            （約合 NT$ {{ Math.round(totalExpenseJPY * 0.22).toLocaleString() }} 元）
+            累積總支出金額（新台幣）
           </div>
         </div>
 
+        <!-- 花費明細列表 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
           <div class="flex justify-between items-center mb-3">
             <h3 class="text-sm font-bold text-slate-800">支出明細列表</h3>
@@ -469,7 +470,7 @@
                 </div>
               </div>
               <div class="text-right">
-                <div class="font-bold text-slate-800 text-sm">¥ {{ Number(exp.amount).toLocaleString() }}</div>
+                <div class="font-bold text-slate-800 text-sm">NT$ {{ Number(exp.amount).toLocaleString() }}</div>
                 <button @click="deleteExpense(eIdx)" class="text-[10px] text-rose-400 hover:text-rose-600 mt-0.5">刪除</button>
               </div>
             </div>
@@ -586,7 +587,7 @@
     </div>
 
 
-    <!-- 彈出視窗 3：新增花費 Modal -->
+    <!-- 彈出視窗 3：新增花費 Modal (幣別修改為新台幣) -->
     <div v-if="showExpenseModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
@@ -618,8 +619,8 @@
               <input v-model="expenseForm.date" type="date" class="w-full p-2 bg-slate-50 border rounded-xl" />
             </div>
             <div>
-              <label class="font-semibold text-slate-700 block mb-1">金額 (日幣 JPY)</label>
-              <input v-model.number="expenseForm.amount" type="number" placeholder="¥ 金額" class="w-full p-2 bg-slate-50 border rounded-xl font-bold" />
+              <label class="font-semibold text-slate-700 block mb-1">金額 (新台幣 TWD)</label>
+              <input v-model.number="expenseForm.amount" type="number" placeholder="NT$ 金額" class="w-full p-2 bg-slate-50 border rounded-xl font-bold" />
             </div>
           </div>
 
@@ -916,11 +917,11 @@
               {
                 id: 'it-19-1',
                 category: '景點',
-                name: '雷夢湖大噴泉 (Jet d\'Eau) 與英國花園花鐘',
+                name: "雷夢湖大噴泉 (Jet d'Eau) 與英國花園花鐘",
                 hours: '全天開放',
                 ticket: '免費',
                 notes: '地勢平坦的湖畔公園散步拍照，觀看標誌性的 140 公尺大噴泉。',
-                address: 'Jet d\'Eau, Geneva',
+                address: "Jet d'Eau, Geneva",
                 transitModeIcon: 'tram',
                 transitTime: '15 分鐘'
               },
@@ -1134,8 +1135,10 @@
 
         const itineraryDays = ref(JSON.parse(localStorage.getItem('my_itinerary')) || defaultItinerary);
         const shoppingList = ref(JSON.parse(localStorage.getItem('my_shopping')) || []);
+        
+        // 花費陣列預設值（單位改為新台幣 TWD）
         const expenses = ref(JSON.parse(localStorage.getItem('my_expenses')) || [
-          { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券', date: '2026-09-13', amount: 96000, paymentMethod: '信用卡', notes: '長輩頭等艙通行證' }
+          { id: '1', category: '交通', name: 'Swiss Travel Pass 8日券 (長輩票)', date: '2026-09-13', amount: 21500, paymentMethod: '信用卡', notes: '頭等艙通行證' }
         ]);
 
         const weatherCityMap = {
@@ -1156,13 +1159,12 @@
         const currentDay = computed(() => itineraryDays.value[selectedDateIndex.value] || itineraryDays.value[0]);
         const currentDayWeather = computed(() => weatherCityMap[currentDay.value.location] || { icon: 'cloud-sun', summary: '氣候宜人', temp: 19, feelsLike: 18 });
 
-        // === 即時匯率系統 (自動連網更新 + 離線快取) ===
+        // 即時匯率系統
         const exchangeCurrency = ref('CHF');
         const inputForeignAmount = ref(100);
         const isRateLoading = ref(false);
         const lastUpdatedTime = ref(localStorage.getItem('rates_last_updated') || '尚未連網');
 
-        // 預設匯率與快取
         const currentRates = ref(JSON.parse(localStorage.getItem('cached_rates')) || {
           CHF: 37.8,
           EUR: 35.4,
@@ -1174,7 +1176,6 @@
           return Math.round((inputForeignAmount.value || 0) * rate);
         });
 
-        // 抓取真實即時匯率函式
         const fetchLiveRates = async () => {
           isRateLoading.value = true;
           try {
@@ -1214,7 +1215,8 @@
           { name: 'Hôtel Vernet Champs Elysées Paris', dates: '9/21~9/24 (3夜)', address: '25 Rue Vernet, 75008 Paris, France', phone: '+33 1 44 31 98 00' },
         ];
 
-        const totalExpenseJPY = computed(() => {
+        // 總花費計算（新台幣 TWD）
+        const totalExpenseTWD = computed(() => {
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
@@ -1243,6 +1245,7 @@
         const showShoppingModal = ref(false);
         const shoppingForm = ref({ name: '', image: null, notes: '', bought: false });
 
+        // 記帳 Form（預設金額以新台幣輸入）
         const showExpenseModal = ref(false);
         const expenseForm = ref({
           category: '飲食',
@@ -1406,7 +1409,7 @@
         onMounted(() => {
           refreshIcons();
           initSortable();
-          fetchLiveRates(); // 開啟 App 自動抓取即時匯率
+          fetchLiveRates();
         });
 
         return {
@@ -1420,7 +1423,7 @@
           hotelList,
           shoppingList,
           expenses,
-          totalExpenseJPY,
+          totalExpenseTWD,
           exchangeCurrency,
           inputForeignAmount,
           currentRates,
