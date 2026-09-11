@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Swiss & Paris Journey 2026</title>
   
-  <!-- ================= PWA 獨立 App 設定 (內嵌支援) ================= -->
+  <!-- ================= PWA 獨立 App 設定 ================= -->
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -169,7 +169,7 @@
           </button>
         </div>
 
-        <!-- 行程卡片清單 -->
+        <!-- 行程卡片清單 (純淨極簡：保留秒開的 Google Maps 導航) -->
         <div id="schedule-list" :key="selectedDateIndex" class="space-y-3">
           <template v-for="(item, idx) in currentDay.items" :key="item.id">
             
@@ -226,7 +226,7 @@
               </div>
             </div>
 
-            <!-- 一般行程卡片 (整合 SBB 班表直達與 Google Maps 導航) -->
+            <!-- 一般行程卡片 -->
             <div 
               v-else 
               class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 hover:border-zurich-200 transition-all cursor-grab active:cursor-grabbing relative"
@@ -261,28 +261,14 @@
                 {{ item.notes }}
               </div>
 
-              <!-- 底部按鈕區：SBB 車次即時查詢 + Google Maps 導航 -->
-              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-end gap-2">
-                <!-- SBB 專用按鈕 (點擊喚醒 SBB App 或開啓官方轉乘即時班表) -->
-                <a 
-                  v-if="item.sbbUrl" 
-                  :href="item.sbbUrl" 
-                  target="_blank" 
-                  rel="noopener"
-                  class="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-xl border border-red-200/70 transition shadow-2xs"
-                  title="查詢 SBB 實時車次與月台"
-                >
-                  <i data-lucide="train" class="w-3.5 h-3.5 text-red-600"></i>
-                  <span>SBB 車次</span>
-                </a>
-
-                <!-- Google Maps 導航按鈕 -->
+              <!-- 底部功能按鈕：Google Maps 導航 -->
+              <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-end">
                 <button 
                   @click.stop="openGoogleMap(item.address || item.name)"
-                  class="flex items-center gap-1 text-xs font-semibold text-zurich-600 hover:text-zurich-800 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/70 transition shadow-2xs"
+                  class="flex items-center gap-1.5 text-xs font-semibold text-zurich-600 hover:text-zurich-800 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/70 transition shadow-2xs"
                 >
                   <i data-lucide="navigation-2" class="w-3.5 h-3.5"></i>
-                  <span>導航</span>
+                  <span>Google Maps 導航</span>
                 </button>
               </div>
             </div>
@@ -594,7 +580,7 @@
       <i data-lucide="plus" class="w-7 h-7"></i>
     </button>
 
-    <!-- 彈出視窗 1：新增/編輯 行程 Modal (支援 SBB 查詢網址設定) -->
+    <!-- 彈出視窗 1：新增/編輯 行程 Modal (乾淨版) -->
     <div v-if="showScheduleModal" class="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-xs">
       <div class="bg-white w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl max-h-[90vh] overflow-y-auto p-5 space-y-4">
         <div class="flex justify-between items-center border-b pb-2">
@@ -638,11 +624,6 @@
           <div>
             <label class="font-semibold text-slate-700 block mb-1">Google Maps 搜尋關鍵字或地址</label>
             <input v-model="modalScheduleForm.address" type="text" placeholder="將用於一鍵導航" class="w-full p-2.5 bg-slate-50 border rounded-xl" />
-          </div>
-
-          <div>
-            <label class="font-semibold text-slate-700 block mb-1">SBB 查班次 Deep Link (選填)</label>
-            <input v-model="modalScheduleForm.sbbUrl" type="url" placeholder="https://www.sbb.ch/..." class="w-full p-2.5 bg-slate-50 border rounded-xl" />
           </div>
         </div>
 
@@ -768,7 +749,7 @@
           { id: 'expenses', name: '花費', icon: 'badge-dollar-sign' }
         ];
 
-        // 完整行程資料 (含精準 SBB 官方 Deep Link 班表轉乘查詢)
+        // 完整行程資料 (純淨版：已移除 SBB 屬性，確保秒開不卡死)
         const defaultItinerary = [
           {
             dateStr: '2026-09-12',
@@ -823,8 +804,7 @@
                 notes: '放行李稍作休息，適應時差與環境。',
                 address: '47 Utoquai, 8008 Zürich, Switzerland',
                 transitModeIcon: 'bus',
-                transitTime: '25 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Z%C3%BCrich%20Flughafen&to=Z%C3%BCrich%20Stadelhofen'
+                transitTime: '25 分鐘'
               },
               {
                 id: 'it-13-2',
@@ -859,8 +839,7 @@
                 notes: '歐洲最古老的木造廊橋，地勢平緩無負擔。',
                 address: 'Kapellbrücke, 6002 Luzern, Switzerland',
                 transitModeIcon: 'train',
-                transitTime: '45 分鐘 (火車)',
-                sbbUrl: 'https://www.sbb.ch/en?from=Z%C3%BCrich%20HB&to=Luzern'
+                transitTime: '45 分鐘 (火車)'
               },
               {
                 id: 'it-14-2',
@@ -871,8 +850,7 @@
                 notes: '轉乘遊船與齒軌列車登頂。交通工具直達觀景台，長輩全程免爬坡即可飽覽湖光山色。',
                 address: 'Rigi Kulm, Switzerland',
                 transitModeIcon: 'sailboat',
-                transitTime: '50 分鐘 (遊船+登山火車)',
-                sbbUrl: 'https://www.sbb.ch/en?from=Luzern&to=Rigi%20Kulm'
+                transitTime: '50 分鐘 (遊船+登山火車)'
               }
             ]
           },
@@ -896,8 +874,7 @@
                 notes: '世界遺產石拱廊步道，長輩能防雨防曬，沿著平緩拱廊欣賞鐘樓天文鐘與熊公園。',
                 address: 'Zytglogge, Kramgasse 40, 3011 Bern',
                 transitModeIcon: 'train',
-                transitTime: '55 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Z%C3%BCrich%20HB&to=Bern'
+                transitTime: '55 分鐘'
               },
               {
                 id: 'it-15-2',
@@ -907,8 +884,7 @@
                 notes: '抵達因特拉肯，使用門鎖密碼自助入住，享受舒適的公寓廚房空間。',
                 address: '16 Spielmatte, 3800 Interlaken, Switzerland',
                 transitModeIcon: 'train',
-                transitTime: '50 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Bern&to=Interlaken%20Ost'
+                transitTime: '50 分鐘'
               }
             ]
           },
@@ -932,8 +908,7 @@
                 notes: '搭乘最新大纜車，平穩舒適直抵轉乘站，大幅縮短交通時間。',
                 address: 'Grindelwald Terminal, Switzerland',
                 transitModeIcon: 'mountain',
-                transitTime: '30 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Interlaken%20Ost&to=Grindelwald%20Terminal'
+                transitTime: '30 分鐘'
               },
               {
                 id: 'it-16-2',
@@ -944,8 +919,7 @@
                 notes: '電梯直達觀景台。提醒長輩高海拔處請放慢腳步、注意保暖防風。',
                 address: 'Jungfraujoch, Switzerland',
                 transitModeIcon: 'train',
-                transitTime: '35 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Grindelwald%20Terminal&to=Jungfraujoch'
+                transitTime: '35 分鐘'
               }
             ]
           },
@@ -969,8 +943,7 @@
                 notes: '地形極為平坦，一出火車站即可仰望落差近300米的壯觀瀑布。',
                 address: 'Staubbachfall Wasserfall, Lauterbrunnen',
                 transitModeIcon: 'train',
-                transitTime: '20 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Interlaken%20Ost&to=Lauterbrunnen'
+                transitTime: '20 分鐘'
               },
               {
                 id: 'it-17-2',
@@ -981,8 +954,7 @@
                 notes: '下午悠閒安坐船艙內，在平穩的湖泊上享受下午茶與群山美景。',
                 address: 'Interlaken West ThS, Interlaken',
                 transitModeIcon: 'sailboat',
-                transitTime: '45 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Interlaken%20West&to=Thun%20(See)'
+                transitTime: '45 分鐘'
               }
             ]
           },
@@ -1006,8 +978,7 @@
                 notes: '全程安坐大片全景車窗前，飽覽漸層湖泊與山谷風光，免除長輩奔波。',
                 address: 'Montreux Gare, Montreux',
                 transitModeIcon: 'train',
-                transitTime: '2 小時',
-                sbbUrl: 'https://www.sbb.ch/en?from=Interlaken%20Ost&to=Montreux'
+                transitTime: '2 小時'
               },
               {
                 id: 'it-18-2',
@@ -1017,8 +988,7 @@
                 notes: '抵達日內瓦，入住附廚房的優質公寓式飯店，生活機能極佳。',
                 address: 'Route de Meyrin 125, 1219 Geneva',
                 transitModeIcon: 'train',
-                transitTime: '1 小時',
-                sbbUrl: 'https://www.sbb.ch/en?from=Montreux&to=Gen%C3%A8ve'
+                transitTime: '1 小時'
               }
             ]
           },
@@ -1077,8 +1047,7 @@
                 notes: '建於湖畔岩石上的中世紀城堡，沿湖平坦步道景色極佳。',
                 address: 'Chillon Castle, Veytaux',
                 transitModeIcon: 'train',
-                transitTime: '55 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Gen%C3%A8ve&to=Veytaux-Chillon'
+                transitTime: '55 分鐘'
               },
               {
                 id: 'it-20-2',
@@ -1089,8 +1058,7 @@
                 notes: '搭乘小火車輕鬆穿梭世界遺產梯田葡萄園，遠眺雷夢湖與阿爾卑斯山。',
                 address: 'Lavaux, Cully, Switzerland',
                 transitModeIcon: 'bus',
-                transitTime: '25 分鐘',
-                sbbUrl: 'https://www.sbb.ch/en?from=Veytaux-Chillon&to=Cully'
+                transitTime: '25 分鐘'
               }
             ]
           },
@@ -1254,10 +1222,10 @@
           }
         ];
 
-        // 升級版本 key 為 v12，確保正確讀入 SBB Deep Link 配置
+        // 升級版本 key 為 v13，徹底排除所有 SBB 造成的 DOM 解析負擔
         let savedItinerary = null;
         try {
-          const raw = localStorage.getItem('my_itinerary_v12');
+          const raw = localStorage.getItem('my_itinerary_v13');
           if (raw) savedItinerary = JSON.parse(raw);
         } catch(e) {}
 
@@ -1350,7 +1318,7 @@
         };
 
         const isWeatherLoading = ref(false);
-        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v12')) || defaultWeatherMap);
+        const liveWeatherData = ref(JSON.parse(localStorage.getItem('cached_weather_v13')) || defaultWeatherMap);
         const weatherLastUpdated = ref(localStorage.getItem('weather_last_updated') || '尚未更新');
 
         const currentDay = computed(() => {
@@ -1399,7 +1367,7 @@
               const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
               weatherLastUpdated.value = timeStr;
 
-              localStorage.setItem('cached_weather_v12', JSON.stringify(liveWeatherData.value));
+              localStorage.setItem('cached_weather_v13', JSON.stringify(liveWeatherData.value));
               localStorage.setItem('weather_last_updated', timeStr);
             }
           } catch (err) {
@@ -1470,7 +1438,7 @@
           return expenses.value.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
         });
 
-        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v12', JSON.stringify(newVal)), { deep: true });
+        watch(itineraryDays, (newVal) => localStorage.setItem('my_itinerary_v13', JSON.stringify(newVal)), { deep: true });
         watch(shoppingList, (newVal) => localStorage.setItem('my_shopping', JSON.stringify(newVal)), { deep: true });
         watch(expenses, (newVal) => localStorage.setItem('my_expenses', JSON.stringify(newVal)), { deep: true });
 
@@ -1557,7 +1525,6 @@
               ticket: '',
               notes: '',
               address: '',
-              sbbUrl: '',
               transitModeIcon: 'bus',
               transitTime: '15 分鐘'
             };
